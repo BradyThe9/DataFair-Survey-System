@@ -23,14 +23,16 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    # Import here to avoid circular imports
     from app.models import User
     return User.query.get(int(user_id))
 
-# Import blueprints after app initialization
+# Import blueprints - NUR die existierenden!
 from app.routes.auth_routes import auth_bp
-from app.routes.main_routes import main_bp
-from app.routes.api_routes import api_bp
+from app.routes.user_routes import user_bp
+from app.routes.data_routes import data_bp
+from app.routes.earning_routes import earning_bp
+from app.routes.activity_routes import activity_bp
+# payment_routes und enterprise_routes erstmal ausgelassen
 
 # Try to import survey system
 try:
@@ -41,10 +43,12 @@ except ImportError as e:
     print(f"⚠️ Survey system disabled: {e}")
     SURVEYS_ENABLED = False
 
-# Register blueprints
+# Register blueprints - nur die existierenden
 app.register_blueprint(auth_bp)
-app.register_blueprint(main_bp)
-app.register_blueprint(api_bp)
+app.register_blueprint(user_bp)
+app.register_blueprint(data_bp)
+app.register_blueprint(earning_bp)
+app.register_blueprint(activity_bp)
 
 # Register survey blueprint if available
 if SURVEYS_ENABLED:
@@ -57,35 +61,50 @@ try:
 except ImportError:
     print("⚠️ Flask-CORS not available")
 
+# Basic routes for frontend
+@app.route('/')
+def index():
+    return send_from_directory('../frontend/pages', 'index.html')
+
+@app.route('/<path:filename>')
+def static_files(filename):
+    # Try pages first, then assets
+    if filename.endswith('.html'):
+        return send_from_directory('../frontend/pages', filename)
+    elif filename.startswith('assets/'):
+        return send_from_directory('../frontend', filename)
+    else:
+        return send_from_directory('../frontend/pages', filename)
+
 def create_demo_user():
-    """Create demo user if it doesn't exist"""
     from app.database import db
     from app.models import User
     
     print("Checking for demo user...")
-    demo_user = User.query.filter_by(email='demo@datafair.com').first()
-    
-    if not demo_user:
-        demo_user = User(
-            email='demo@datafair.com',
-            first_name='Demo',
-            last_name='User',
-            password_hash=generate_password_hash('demo123'),
-            country='DE',
-            newsletter=True
-        )
-        db.session.add(demo_user)
-        db.session.commit()
-        print("✅ Demo user created!")
-        print("   Email: demo@datafair.com")
-        print("   Password: demo123")
-    else:
-        print("✅ Demo user already exists!")
+    try:
+        demo_user = User.query.filter_by(email='demo@datafair.com').first()
+        if not demo_user:
+            demo_user = User(
+                email='demo@datafair.com',
+                first_name='Demo',
+                last_name='User',
+                password_hash=generate_password_hash('demo123'),
+                country='DE',
+                newsletter=True
+            )
+            db.session.add(demo_user)
+            db.session.commit()
+            print("✅ Demo user created!")
+            print("   Email: demo@datafair.com")
+            print("   Password: demo123")
+        else:
+            print("✅ Demo user already exists!")
+    except Exception as e:
+        print(f"❌ Demo user error: {e}")
 
 def init_sample_surveys():
-    """Initialize sample surveys"""
     if not SURVEYS_ENABLED:
-        print("⚠️ Survey system not available - skipping survey initialization")
+        print("⚠️ Survey system not available")
         return
         
     try:
@@ -157,15 +176,6 @@ def init_sample_surveys():
         import traceback
         traceback.print_exc()
 
-# Error handlers
-@app.errorhandler(404)
-def not_found_error(error):
-    return jsonify({'error': 'Not found'}), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({'error': 'Internal server error'}), 500
-
 # Health check endpoint
 @app.route('/health')
 def health_check():
@@ -200,9 +210,9 @@ if __name__ == '__main__':
         if SURVEYS_ENABLED:
             print("📋 Survey System: ✅ ACTIVE")
             print("🧪 Test Endpoint: http://127.0.0.1:5000/api/surveys/test")
+            print("📋 Available Surveys: http://127.0.0.1:5000/api/surveys/available")
         else:
             print("📋 Survey System: ❌ DISABLED")
         print("=" * 50)
         
-    # Start the Flask development server
     app.run(debug=True, port=5000, host='127.0.0.1')

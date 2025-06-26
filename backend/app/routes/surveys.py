@@ -20,13 +20,13 @@ def test_surveys():
 def get_available_surveys():
     """Get all available surveys for the current user"""
     try:
-        # Import here to avoid circular imports
+        # Import hier um circular imports zu vermeiden
         from app.models import Survey, SurveyResponse, SURVEY_CATEGORIES
         from app.database import db
         
         user_id = current_user.id
         
-        # Get all active surveys that user hasn't participated in yet
+        # Alle aktiven Umfragen die der User noch nicht gemacht hat
         available_surveys = db.session.query(Survey).filter(
             and_(
                 Survey.status == 'active',
@@ -43,19 +43,25 @@ def get_available_surveys():
         result = []
         for survey in available_surveys:
             survey_data = survey.to_dict()
-            survey_data['category_display'] = SURVEY_CATEGORIES.get(survey.category, survey.category)
+            try:
+                survey_data['category_display'] = SURVEY_CATEGORIES.get(survey.category, survey.category)
+            except:
+                survey_data['category_display'] = survey.category
             result.append(survey_data)
         
         return jsonify({
             'success': True,
             'surveys': result,
-            'total_potential_earnings': sum(s['base_reward'] for s in result),
+            'total_potential_earnings': sum(s.get('base_reward', 0) for s in result),
             'count': len(result)
         }), 200
         
     except Exception as e:
         current_app.logger.error(f"Error fetching available surveys: {str(e)}")
-        return jsonify({'success': False, 'message': f'Fehler: {str(e)}'}), 500
+        return jsonify({
+            'success': False, 
+            'message': f'Fehler beim Laden der Umfragen: {str(e)}'
+        }), 500
 
 @surveys_bp.route('/<int:survey_id>', methods=['GET'])
 @login_required
@@ -85,7 +91,10 @@ def get_survey_details(survey_id):
             }), 400
         
         survey_data = survey.to_dict()
-        survey_data['category_display'] = SURVEY_CATEGORIES.get(survey.category, survey.category)
+        try:
+            survey_data['category_display'] = SURVEY_CATEGORIES.get(survey.category, survey.category)
+        except:
+            survey_data['category_display'] = survey.category
         
         return jsonify({
             'success': True,
@@ -94,7 +103,10 @@ def get_survey_details(survey_id):
         
     except Exception as e:
         current_app.logger.error(f"Error fetching survey details: {str(e)}")
-        return jsonify({'success': False, 'message': f'Fehler: {str(e)}'}), 500
+        return jsonify({
+            'success': False, 
+            'message': f'Fehler beim Laden der Umfrage: {str(e)}'
+        }), 500
 
 @surveys_bp.route('/stats', methods=['GET'])
 @login_required  
@@ -128,4 +140,7 @@ def get_user_survey_stats():
         
     except Exception as e:
         current_app.logger.error(f"Error fetching survey stats: {str(e)}")
-        return jsonify({'success': False, 'message': f'Fehler: {str(e)}'}), 500
+        return jsonify({
+            'success': False, 
+            'message': f'Fehler beim Laden der Statistiken: {str(e)}'
+        }), 500
