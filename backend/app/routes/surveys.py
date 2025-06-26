@@ -3,8 +3,6 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from sqlalchemy import and_, or_
-from app.models import Survey, SurveyResponse, SURVEY_CATEGORIES
-from app.database import db
 
 surveys_bp = Blueprint('surveys', __name__, url_prefix='/api/surveys')
 
@@ -22,6 +20,10 @@ def test_surveys():
 def get_available_surveys():
     """Get all available surveys for the current user"""
     try:
+        # Import here to avoid circular imports
+        from app.models import Survey, SurveyResponse, SURVEY_CATEGORIES
+        from app.database import db
+        
         user_id = current_user.id
         
         # Get all active surveys that user hasn't participated in yet
@@ -42,7 +44,6 @@ def get_available_surveys():
         for survey in available_surveys:
             survey_data = survey.to_dict()
             survey_data['category_display'] = SURVEY_CATEGORIES.get(survey.category, survey.category)
-            survey_data['slots_remaining'] = survey.get_slots_remaining()
             result.append(survey_data)
         
         return jsonify({
@@ -54,13 +55,15 @@ def get_available_surveys():
         
     except Exception as e:
         current_app.logger.error(f"Error fetching available surveys: {str(e)}")
-        return jsonify({'success': False, 'message': f'Fehler beim Laden der Umfragen: {str(e)}'}), 500
+        return jsonify({'success': False, 'message': f'Fehler: {str(e)}'}), 500
 
 @surveys_bp.route('/<int:survey_id>', methods=['GET'])
 @login_required
 def get_survey_details(survey_id):
     """Get detailed information about a specific survey"""
     try:
+        from app.models import Survey, SurveyResponse, SURVEY_CATEGORIES
+        
         survey = Survey.query.get_or_404(survey_id)
         
         # Check if user already participated
@@ -91,13 +94,16 @@ def get_survey_details(survey_id):
         
     except Exception as e:
         current_app.logger.error(f"Error fetching survey details: {str(e)}")
-        return jsonify({'success': False, 'message': 'Fehler beim Laden der Umfrage'}), 500
+        return jsonify({'success': False, 'message': f'Fehler: {str(e)}'}), 500
 
 @surveys_bp.route('/stats', methods=['GET'])
 @login_required  
 def get_user_survey_stats():
     """Get user's survey statistics"""
     try:
+        from app.models import SurveyResponse
+        from app.database import db
+        
         user_id = current_user.id
         
         # Calculate basic stats
@@ -122,4 +128,4 @@ def get_user_survey_stats():
         
     except Exception as e:
         current_app.logger.error(f"Error fetching survey stats: {str(e)}")
-        return jsonify({'success': False, 'message': 'Fehler beim Laden der Statistiken'}), 500
+        return jsonify({'success': False, 'message': f'Fehler: {str(e)}'}), 500

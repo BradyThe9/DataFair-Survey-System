@@ -12,21 +12,9 @@ app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data_fair.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Import and initialize database - ALTERNATIVE VERSION
-try:
-    from app.database import init_db
-    init_db(app)
-except ImportError:
-    # Alternative: Direct SQLAlchemy initialization
-    from flask_sqlalchemy import SQLAlchemy
-    db = SQLAlchemy(app)
-
-# Import models after db initialization
-try:
-    from app.models import User, Survey, SurveyResponse, SURVEY_CATEGORIES
-except ImportError as e:
-    print(f"Error importing models: {e}")
-    exit(1)
+# Import and initialize database
+from app.database import init_db
+init_db(app)
 
 # Initialize LoginManager
 login_manager = LoginManager()
@@ -35,16 +23,14 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
+    # Import here to avoid circular imports
+    from app.models import User
     return User.query.get(int(user_id))
 
 # Import blueprints after app initialization
-try:
-    from app.routes.auth_routes import auth_bp
-    from app.routes.main_routes import main_bp
-    from app.routes.api_routes import api_bp
-except ImportError as e:
-    print(f"Error importing routes: {e}")
-    exit(1)
+from app.routes.auth_routes import auth_bp
+from app.routes.main_routes import main_bp
+from app.routes.api_routes import api_bp
 
 # Try to import survey system
 try:
@@ -73,11 +59,8 @@ except ImportError:
 
 def create_demo_user():
     """Create demo user if it doesn't exist"""
-    try:
-        from app.database import db
-    except ImportError:
-        # Use the direct db instance
-        pass
+    from app.database import db
+    from app.models import User
     
     print("Checking for demo user...")
     demo_user = User.query.filter_by(email='demo@datafair.com').first()
@@ -106,10 +89,8 @@ def init_sample_surveys():
         return
         
     try:
-        try:
-            from app.database import db
-        except ImportError:
-            pass  # Use the direct db instance
+        from app.database import db
+        from app.models import Survey
         
         if Survey.query.count() == 0:
             sample_surveys = [
@@ -197,10 +178,7 @@ def health_check():
 
 if __name__ == '__main__':
     with app.app_context():
-        try:
-            from app.database import db
-        except ImportError:
-            pass  # Use the direct db instance
+        from app.database import db
         
         print("🚀 Initializing DataFair Application...")
         print("=" * 50)
