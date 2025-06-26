@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="de" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataFair - Deine Daten. Dein Wert.</title>
+    
+    <!-- Tailwind CSS von CDN laden - das ist unser Design-Werkzeugkasten -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js von CDN laden - das macht unsere Seite interaktiv -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Benutzerdefinierte Styles für das Premium Dark Theme -->
+    <style>
+        /* Eigene CSS-Regeln für spezielle Effekte, die Tailwind nicht abdeckt */
+        body {
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        }
+        
+        /* Glow-Effekt für Buttons - macht sie "leuchtend" wie bei Premium-Marken */
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(251, 146, 60, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        /* Frosted Glass-Effekt für Cards - modern und elegant */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Animation für sanfte Übergänge */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Smooth Scroll-Verhalten */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white font-sans antialiased">
+    
+    <!-- Navigation Bar - bleibt immer sichtbar und elegant -->
+    <nav class="fixed top-0 w-full z-50 glass-card" x-data="{ mobileOpen: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                
+                <!-- Logo und Markenname -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
+                        <span class="text-xl font-bold text-white">DF</span>
+                    </div>
+                    <span class="text-xl font-bold text-white">DataFair</span>
+                </div>
+                
+                <!-- Desktop Navigation Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#how-it-works" class="text-gray-300 hover:text-orange-400 transition-colors duration-200">Wie es funktioniert</a>
+                    <a href="#privacy" class="text-gray-300 hover:text-orange-400 transition-colors duration-200">Datenschutz</a>
+                    <a href="#earnings" class="text-gray-300 hover:text-orange-400 transition-colors duration-200">Verdienst</a>
+                    <a href="enterprise.html" class="text-gray-300 hover:text-orange-400 transition-colors duration-200">Für Unternehmen</a>
+                    
+                    <!-- Call-to-Action Button -->
+                    <button onclick="window.location.href='register.html'" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2 rounded-lg btn-glow font-semibold">
+                        Jetzt registrieren
+                    </button>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <button @click="mobileOpen = !mobileOpen" class="md:hidden text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile Navigation Menu -->
+            <div x-show="mobileOpen" x-transition class="md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 glass-card mt-2 rounded-lg">
+                    <a href="#how-it-works" class="block px-3 py-2 text-gray-300 hover:text-orange-400">Wie es funktioniert</a>
+                    <a href="#privacy" class="block px-3 py-2 text-gray-300 hover:text-orange-400">Datenschutz</a>
+                    <a href="#earnings" class="block px-3 py-2 text-gray-300 hover:text-orange-400">Verdienst</a>
+                    <a href="enterprise.html" class="block px-3 py-2 text-gray-300 hover:text-orange-400">Für Unternehmen</a>
+                    <button onclick="window.location.href='register.html'" class="w-full mt-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2 rounded-lg font-semibold">
+                        Jetzt registrieren
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section - der erste Eindruck, der Besucher begeistern soll -->
+    <section class="pt-24 pb-16 px-4 fade-in">
+        <div class="max-w-6xl mx-auto text-center">
+            
+            <!-- Hauptüberschrift mit gradientem Text-Effekt -->
+            <h1 class="text-5xl md:text-7xl font-bold mb-6">
+                <span class="bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">
+                    Deine Daten.
+                </span>
+                <br>
+                <span class="text-white">Dein Wert.</span>
+            </h1>
+            
+            <!-- Untertitel erklärt das Konzept in einem Satz -->
+            <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+                Verdiene mit dem, was andere gratis abgeben. Teile deine Daten freiwillig und kontrolliert – 
+                100% transparent, DSGVO-konform und fair entlohnt.
+            </p>
+            
+            <!-- Call-to-Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+                <button onclick="window.location.href='register.html'" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-8 py-4 rounded-lg btn-glow font-semibold text-lg">
+                    Jetzt kostenlos starten
+                </button>
+                <button onclick="window.location.href='enterprise.html'" class="border border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white px-8 py-4 rounded-lg transition-all duration-300 font-semibold text-lg">
+                    Mehr erfahren
+                </button>
+            </div>
+            
+            <!-- Vertrauensindikatoren -->
+            <div class="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-400">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>DSGVO-konform</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>SSL-verschlüsselt</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>Vollständige Kontrolle</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Wie es funktioniert Section -->
+    <section id="how-it-works" class="py-16 px-4">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16">
+                So einfach <span class="text-orange-400">funktioniert's</span>
+            </h2>
+            
+            <!-- Schritt-für-Schritt Process -->
+            <div class="grid md:grid-cols-3 gap-8">
+                
+                <!-- Schritt 1 -->
+                <div class="glass-card rounded-xl p-8 text-center hover:scale-105 transition-transform duration-300">
+                    <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-white">1</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Registrieren</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        Erstelle dein kostenloses Konto in nur 2 Minuten. Kein Risiko, keine versteckten Kosten.
+                    </p>
+                </div>
+                
+                <!-- Schritt 2 -->
+                <div class="glass-card rounded-xl p-8 text-center hover:scale-105 transition-transform duration-300">
+                    <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-white">2</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Daten teilen</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        Entscheide selbst, welche Daten du freigibst. Jederzeit änderbar und vollständig unter deiner Kontrolle.
+                    </p>
+                </div>
+                
+                <!-- Schritt 3 -->
+                <div class="glass-card rounded-xl p-8 text-center hover:scale-105 transition-transform duration-300">
+                    <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-2xl font-bold text-white">3</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Belohnung erhalten</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        Verdiene fair und transparent. Auszahlung per PayPal, Überweisung oder als Gutscheine.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Earnings Preview Section -->
+    <section id="earnings" class="py-16 px-4 bg-gradient-to-r from-gray-900 to-gray-800">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                
+                <!-- Text Content -->
+                <div>
+                    <h2 class="text-4xl font-bold mb-6">
+                        Verdiene bis zu <span class="text-orange-400">50€</span> pro Monat
+                    </h2>
+                    <p class="text-xl text-gray-300 mb-8 leading-relaxed">
+                        Deine Daten sind wertvoll. Während andere Plattformen Milliarden damit verdienen, 
+                        profitierst du direkt und fair von deinen eigenen Informationen.
+                    </p>
+                    
+                    <!-- Features Liste -->
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-gray-300">Sofortige Auszahlung ab 10€</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-gray-300">Transparente Vergütung pro Datentyp</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-gray-300">Bonus für langfristige Teilnahme</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mock Dashboard -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-xl font-semibold mb-6 text-center">Dein Verdienst-Dashboard</h3>
+                    
+                    <!-- Earnings Display -->
+                    <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg p-6 mb-6">
+                        <div class="text-center">
+                            <p class="text-orange-100 text-sm">Diesen Monat verdient:</p>
+                            <p class="text-4xl font-bold text-white">32,50€</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Types -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                            <span class="text-gray-300">Shopping-Verhalten</span>
+                            <span class="text-orange-400 font-semibold">12,00€</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                            <span class="text-gray-300">Demografische Daten</span>
+                            <span class="text-orange-400 font-semibold">8,50€</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                            <span class="text-gray-300">Umfrage-Teilnahmen</span>
+                            <span class="text-orange-400 font-semibold">12,00€</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="window.location.href='register.html'" class="w-full mt-6 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg transition-colors duration-200">
+                        Jetzt starten
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Privacy Section -->
+    <section id="privacy" class="py-16 px-4">
+        <div class="max-w-6xl mx-auto text-center">
+            <h2 class="text-4xl font-bold mb-8">
+                Deine <span class="text-orange-400">Privatsphäre</span> ist geschützt
+            </h2>
+            <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">
+                Wir nehmen Datenschutz ernst. Alle Daten werden anonymisiert übertragen und du behältst jederzeit die volle Kontrolle.
+            </p>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-card rounded-xl p-6">
+                    <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Ende-zu-Ende Verschlüsselung</h3>
+                    <p class="text-gray-400 text-sm">Alle Daten werden mit modernster Verschlüsselung geschützt.</p>
+                </div>
+                
+                <div class="glass-card rounded-xl p-6">
+                    <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Anonymisierung</h3>
+                    <p class="text-gray-400 text-sm">Persönliche Identifikatoren werden vor der Weitergabe entfernt.</p>
+                </div>
+                
+                <div class="glass-card rounded-xl p-6">
+                    <div class="w-12 h-12 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"></path>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2h8a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 3a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Vollständige Kontrolle</h3>
+                    <p class="text-gray-400 text-sm">Du entscheidest jederzeit, welche Daten geteilt werden.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="py-16 px-4 bg-gradient-to-r from-orange-500 to-amber-500">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl font-bold text-white mb-6">
+                Bereit, mit deinen Daten zu verdienen?
+            </h2>
+            <p class="text-xl text-orange-100 mb-8">
+                Starte noch heute und verwandle deine wertvollen Daten in echtes Geld. Kostenlos und unverbindlich.
+            </p>
+            <button onclick="window.location.href='register.html'" class="bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
+                Jetzt kostenlos registrieren
+            </button>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="py-12 px-4 border-t border-gray-800">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-4 gap-8">
+                
+                <!-- Company Info -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
+                            <span class="text-sm font-bold text-white">DF</span>
+                        </div>
+                        <span class="text-lg font-bold text-white">DataFair</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">
+                        Faire Vergütung für deine wertvollen Daten. Transparent, sicher und nutzerfreundlich.
+                    </p>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#how-it-works" class="hover:text-orange-400 transition-colors">Wie es funktioniert</a></li>
+                        <li><a href="#privacy" class="hover:text-orange-400 transition-colors">Datenschutz</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">AGB</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">FAQ</a></li>
+                    </ul>
+                </div>
+                
+                <!-- For Companies -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Für Unternehmen</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="enterprise.html" class="hover:text-orange-400 transition-colors">API-Zugang</a></li>
+                        <li><a href="enterprise.html#pricing" class="hover:text-orange-400 transition-colors">Preise</a></li>
+                        <li><a href="enterprise.html#api" class="hover:text-orange-400 transition-colors">Dokumentation</a></li>
+                        <li><a href="enterprise.html#contact" class="hover:text-orange-400 transition-colors">Kontakt</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Contact -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Kontakt</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li>support@datafair.com</li>
+                        <li>+49 (0) 123 456 789</li>
+                        <li>Mo-Fr 9:00-18:00 Uhr</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2025 DataFair. Alle Rechte vorbehalten.</p>
+            </div>
+        </div>
+    </footer>
+    
+</body>
+</html>

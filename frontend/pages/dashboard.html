@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="de" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - DataFair</title>
+    
+    <!-- Tailwind CSS von CDN laden -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js von CDN laden für Interaktivität -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Chart.js für Datenvisualisierung -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <!-- DataFair API Client -->
+    <script src="/assets/js/api.js"></script>
+
+    
+    <!-- Benutzerdefinierte Styles -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        }
+        
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(251, 146, 60, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+            border: 1px solid rgba(251, 146, 60, 0.2);
+        }
+        
+        .survey-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .survey-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background-color: #374151;
+            border-radius: 12px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .toggle-switch.active {
+            background-color: #f97316;
+        }
+        
+        .toggle-switch::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-switch.active::before {
+            transform: translateX(26px);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1f2937;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        
+        /* Survey Progress Bar */
+        .progress-bar {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            transition: width 0.3s ease;
+        }
+        
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white font-sans antialiased">
+    
+    <!-- Hauptcontainer mit Alpine.js Dashboard-Controller -->
+    <div x-data="dashboardController()" x-init="init()">
+        
+        <!-- Loading Overlay -->
+        <div x-show="isLoading" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div class="glass-card rounded-lg p-8 text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p class="text-gray-300">Lade Dashboard-Daten...</p>
+            </div>
+        </div>
+        
+        <!-- Navigation Bar -->
+        <nav class="fixed top-0 w-full z-40 glass-card">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    
+                    <!-- Logo -->
+                    <div class="flex items-center space-x-3">
+                        <a href="index.html" class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
+                                <span class="text-xl font-bold text-white">DF</span>
+                            </div>
+                            <span class="text-xl font-bold text-white">DataFair</span>
+                        </a>
+                        <span class="text-sm text-gray-400 hidden sm:block">Dashboard</span>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    <div class="flex items-center space-x-4" x-data="{ userMenuOpen: false }">
+                        <!-- Benachrichtigungen -->
+                        <button class="relative p-2 text-gray-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zm-5-15c1.38 0 2.74.35 4 1M9 19a9 9 0 110-18 9 9 0 010 18z"></path>
+                            </svg>
+                            <span x-show="unreadNotifications > 0" class="absolute top-0 right-0 w-3 h-3 bg-orange-500 rounded-full"></span>
+                        </button>
+                        
+                        <!-- User Avatar und Dropdown -->
+                        <div class="relative">
+                            <button @click="userMenuOpen = !userMenuOpen" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-800 transition-colors">
+                                <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center">
+                                    <span class="text-sm font-semibold text-white" x-text="user.firstName.charAt(0) + user.lastName.charAt(0)"></span>
+                                </div>
+                                <span class="hidden sm:block text-sm font-medium" x-text="user.firstName + ' ' + user.lastName"></span>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            
+                            <!-- Dropdown Menu -->
+                            <div x-show="userMenuOpen" @click.away="userMenuOpen = false" x-transition class="absolute right-0 mt-2 w-48 glass-card rounded-lg shadow-lg py-2">
+                                <a href="#" @click="activeTab = 'profile'" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800">Profil bearbeiten</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800">Einstellungen</a>
+                                <hr class="my-2 border-gray-700">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800">Hilfe & Support</a>
+                                <a href="#" @click="logout()" class="block px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-gray-800">Abmelden</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Hauptinhalt -->
+        <div class="pt-16 min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                
+                <!-- Willkommensnachricht -->
+                <div class="mb-8 fade-in">
+                    <h1 class="text-3xl font-bold mb-2">
+                        Willkommen zurück, <span class="text-orange-400" x-text="user.firstName"></span>!
+                    </h1>
+                    <p class="text-gray-400">Hier ist deine Übersicht über deine geteilten Daten und Verdienste.</p>
+                </div>
+                
+                <!-- Tab Navigation -->
+                <div class="mb-8">
+                    <div class="border-b border-gray-700">
+                        <nav class="-mb-px flex space-x-8">
+                            <button @click="activeTab = 'overview'" :class="activeTab === 'overview' ? 'border-orange-500 text-orange-400' : 'border-transparent text-gray-400 hover:text-gray-300'" class="py-2 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Übersicht
+                            </button>
+                            <button @click="activeTab = 'data'" :class="activeTab === 'data' ? 'border-orange-500 text-orange-400' : 'border-transparent text-gray-400 hover:text-gray-300'" class="py-2 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Meine Daten
+                            </button>
+                            <button @click="activeTab = 'surveys'" :class="activeTab === 'surveys' ? 'border-orange-500 text-orange-400' : 'border-transparent text-gray-400 hover:text-gray-300'" class="py-2 px-1 border-b-2 font-medium text-sm transition-colors relative">
+                                Umfragen
+                                <span x-show="availableSurveys.length > 0" class="absolute -top-1 -right-2 w-5 h-5 bg-orange-500 rounded-full text-xs flex items-center justify-center text-white" x-text="availableSurveys.length"></span>
+                            </button>
+                            <button @click="activeTab = 'earnings'" :class="activeTab === 'earnings' ? 'border-orange-500 text-orange-400' : 'border-transparent text-gray-400 hover:text-gray-300'" class="py-2 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Auszahlungen
+                            </button>
+                            <button @click="activeTab = 'activity'" :class="activeTab === 'activity' ? 'border-orange-500 text-orange-400' : 'border-transparent text-gray-400 hover:text-gray-300'" class="py-2 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Aktivität
+                            </button>
+                            <button @click="activeTab = 'profile'" :class="activeTab === 'profile' ? 'border-orange-500 text-orange-400' : 'border-transparent text-gray-400 hover:text-gray-300'" class="py-2 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Profil
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+                
+                <!-- Tab Content -->
+                
+                <!-- Übersicht Tab -->
+                <div x-show="activeTab === 'overview'" class="space-y-6">
+                    
+                    <!-- Statistik Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        
+                        <!-- Monatlicher Verdienst -->
+                        <div class="stats-card rounded-xl p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400">Diesen Monat</p>
+                                    <p class="text-3xl font-bold text-white" x-text="'€' + earnings.thisMonth.toFixed(2)"></p>
+                                    <p class="text-sm text-green-400 flex items-center mt-1">
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <span x-show="earnings.thisMonth > 0">+15% vs. letzten Monat</span>
+                                        <span x-show="earnings.thisMonth === 0">Noch keine Einnahmen</span>
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-orange-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Gesamtverdienst -->
+                        <div class="glass-card rounded-xl p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400">Gesamtverdienst</p>
+                                    <p class="text-3xl font-bold text-white" x-text="'€' + earnings.total.toFixed(2)"></p>
+                                    <p class="text-sm text-gray-400 mt-1">Seit Registrierung</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Aktive Datentypen -->
+                        <div class="glass-card rounded-xl p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400">Aktive Datentypen</p>
+                                    <p class="text-3xl font-bold text-white" x-text="dataTypes.filter(type => type.enabled).length"></p>
+                                    <p class="text-sm text-gray-400 mt-1" x-text="'von ' + dataTypes.length + ' verfügbar'"></p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Nächste Auszahlung -->
+                        <div class="glass-card rounded-xl p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400">Verfügbar für Auszahlung</p>
+                                    <p class="text-3xl font-bold text-white" x-text="'€' + earnings.available.toFixed(2)"></p>
+                                    <p class="text-sm text-orange-400 mt-1">
+                                        <span x-show="earnings.available >= 10">Auszahlung möglich</span>
+                                        <span x-show="earnings.available < 10">Min. €10 erforderlich</span>
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Verdienst-Chart und Quick Actions -->
+                    <div class="grid lg:grid-cols-3 gap-6">
+                        
+                        <!-- Verdienst-Verlauf Chart -->
+                        <div class="lg:col-span-2 glass-card rounded-xl p-6">
+                            <h3 class="text-lg font-semibold mb-4">Verdienst-Entwicklung</h3>
+                            <div class="h-64">
+                                <canvas id="earningsChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="glass-card rounded-xl p-6">
+                            <h3 class="text-lg font-semibold mb-4">Schnellaktionen</h3>
+                            <div class="space-y-3">
+                                <button @click="activeTab = 'earnings'" :disabled="earnings.available < 10" :class="earnings.available >= 10 ? 'btn-glow' : 'opacity-50 cursor-not-allowed'" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-lg font-semibold">
+                                    Auszahlung beantragen
+                                </button>
+                                <button @click="activeTab = 'data'" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                                    Datenfreigaben verwalten
+                                </button>
+                                <button @click="activeTab = 'surveys'" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-colors relative">
+                                    Neue Umfragen ansehen
+                                    <span x-show="availableSurveys.length > 0" class="absolute top-2 right-2 w-6 h-6 bg-orange-500 rounded-full text-xs flex items-center justify-center" x-text="availableSurveys.length"></span>
+                                </button>
+                                <button @click="generateTestEarnings()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                                    🧪 Test-Verdienste generieren
+                                </button>
+                            </div>
+                            
+                            <!-- Verdienstpotential -->
+                            <div class="mt-6 p-4 bg-gradient-to-r from-orange-500 bg-opacity-10 to-amber-500 bg-opacity-10 rounded-lg border border-orange-500 border-opacity-20">
+                                <h4 class="font-semibold text-orange-400 mb-2">💡 Verdienstpotential</h4>
+                                <template x-if="dataTypes.filter(type => !type.enabled).length > 0">
+                                    <div>
+                                        <p class="text-sm text-gray-300 mb-2">
+                                            Du könntest bis zu 
+                                            <span class="font-semibold text-orange-400">
+                                                €<span x-text="dataTypes.filter(type => !type.enabled).reduce((sum, type) => sum + type.monthlyValue, 0).toFixed(2)"></span> mehr
+                                            </span> 
+                                            pro Monat verdienen!
+                                        </p>
+                                        <button @click="activeTab = 'data'" class="text-orange-400 text-sm font-semibold hover:text-orange-300">
+                                            Mehr Datentypen aktivieren →
+                                        </button>
+                                    </div>
+                                </template>
+                                <template x-if="dataTypes.filter(type => !type.enabled).length === 0">
+                                    <p class="text-sm text-gray-300">
+                                        Super! Du hast alle verfügbaren Datentypen aktiviert. 🎉
+                                    </p>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Daten-Management Tab -->
+                <div x-show="activeTab === 'data'" class="space-y-6">
+                    
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-xl font-semibold mb-6">Datenfreigabe verwalten</h3>
+                        <p class="text-gray-400 mb-6">Entscheide selbst, welche Daten du teilen möchtest. Du kannst jederzeit Änderungen vornehmen.</p>
+                        
+                        <div class="space-y-4">
+                            <template x-for="dataType in dataTypes" :key="dataType.id">
+                                <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-3 mb-2">
+                                            <span class="text-2xl" x-text="dataType.icon"></span>
+                                            <h4 class="font-semibold" x-text="dataType.name"></h4>
+                                            <span class="px-2 py-1 bg-orange-500 bg-opacity-20 text-orange-400 text-xs rounded-full" x-text="'€' + dataType.monthlyValue.toFixed(2) + '/Monat'"></span>
+                                        </div>
+                                        <p class="text-sm text-gray-400" x-text="dataType.description"></p>
+                                        <p class="text-xs text-gray-500 mt-1" x-text="'Letzte Anfrage: ' + (dataType.lastRequest || 'Nie')"></p>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div @click="toggleDataType(dataType)" :class="dataType.enabled ? 'active' : ''" class="toggle-switch"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Umfragen Tab -->
+                <div x-show="activeTab === 'surveys'" class="space-y-6">
+                    
+                    <!-- Verfügbare Umfragen -->
+                    <div x-show="surveyView === 'list'">
+                        <div class="glass-card rounded-xl p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-semibold">Verfügbare Umfragen</h3>
+                                <div class="flex space-x-2">
+                                    <button @click="loadSurveyHistory()" class="text-sm text-gray-400 hover:text-orange-400">
+                                        Historie ansehen
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Umfragen-Liste -->
+                            <div x-show="availableSurveys.length > 0" class="grid gap-4">
+                                <template x-for="survey in availableSurveys" :key="survey.id">
+                                    <div class="survey-card rounded-lg p-6 cursor-pointer" @click="viewSurveyDetails(survey.id)">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <h4 class="font-semibold text-lg mb-1" x-text="survey.title"></h4>
+                                                <p class="text-sm text-gray-400" x-text="survey.company"></p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-2xl font-bold text-indigo-400" x-text="'€' + survey.reward.toFixed(2)"></p>
+                                                <p class="text-xs text-gray-400" x-text="survey.estimatedTime + ' Min.'"></p>
+                                            </div>
+                                        </div>
+                                        <p class="text-gray-300 mb-4" x-text="survey.description"></p>
+                                        <div class="flex items-center justify-between">
+                                            <span class="px-2 py-1 bg-indigo-500 bg-opacity-20 text-indigo-400 text-xs rounded-full" x-text="survey.category"></span>
+                                            <button class="text-indigo-400 hover:text-indigo-300 font-semibold text-sm">
+                                                Jetzt teilnehmen →
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            
+                            <!-- Keine Umfragen verfügbar -->
+                            <div x-show="availableSurveys.length === 0" class="text-center py-12">
+                                <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                <p class="text-gray-400">Aktuell sind keine neuen Umfragen verfügbar.</p>
+                                <p class="text-sm text-gray-500 mt-2">Schau später nochmal vorbei!</p>
+                            </div>
+                            
+                            <!-- In Bearbeitung -->
+                            <div x-show="inProgressSurveys.length > 0" class="mt-8">
+                                <h4 class="font-semibold mb-4">Fortsetzen</h4>
+                                <div class="space-y-3">
+                                    <template x-for="survey in inProgressSurveys" :key="survey.id">
+                                        <div class="bg-gray-800 rounded-lg p-4 flex items-center justify-between">
+                                            <div>
+                                                <h5 class="font-medium" x-text="survey.title"></h5>
+                                                <p class="text-sm text-gray-400" x-text="'Begonnen: ' + new Date(survey.startedAt).toLocaleDateString('de-DE')"></p>
+                                            </div>
+                                            <button @click="continueSurvey(survey.id, survey.responseId)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                                                Fortsetzen
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Umfrage-Details / Durchführung -->
+                    <div x-show="surveyView === 'detail'" class="glass-card rounded-xl p-6">
+                        <div x-show="currentSurvey && !surveyInProgress">
+                            <h3 class="text-xl font-semibold mb-4" x-text="currentSurvey.title"></h3>
+                            <p class="text-gray-400 mb-6" x-text="currentSurvey.description"></p>
+                            
+                            <div class="grid grid-cols-3 gap-4 mb-6">
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-orange-400" x-text="'€' + currentSurvey.reward.toFixed(2)"></p>
+                                    <p class="text-sm text-gray-400">Vergütung</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-indigo-400" x-text="currentSurvey.estimatedTime + ' Min'"></p>
+                                    <p class="text-sm text-gray-400">Geschätzte Dauer</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-green-400" x-text="currentSurvey.questionCount"></p>
+                                    <p class="text-sm text-gray-400">Fragen</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-4">
+                                <button @click="startSurvey()" class="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-lg font-semibold btn-glow">
+                                    Umfrage starten
+                                </button>
+                                <button @click="surveyView = 'list'" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors">
+                                    Zurück
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Umfrage läuft -->
+                        <div x-show="surveyInProgress && currentQuestion">
+                            <!-- Progress Bar -->
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm text-gray-400" x-text="'Frage ' + (currentQuestionIndex + 1) + ' von ' + currentSurvey.questions.length"></span>
+                                    <span class="text-sm text-gray-400" x-text="Math.round(((currentQuestionIndex + 1) / currentSurvey.questions.length) * 100) + '%'"></span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="progress-bar h-2 rounded-full" :style="'width: ' + ((currentQuestionIndex + 1) / currentSurvey.questions.length * 100) + '%'"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Frage -->
+                            <div class="mb-8">
+                                <h4 class="text-lg font-semibold mb-4" x-text="currentQuestion.text"></h4>
+                                
+                                <!-- Single Choice -->
+                                <div x-show="currentQuestion.type === 'single'" class="space-y-3">
+                                    <template x-for="option in currentQuestion.options" :key="option.id">
+                                        <label class="flex items-center p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
+                                            <input type="radio" :name="'question_' + currentQuestion.id" :value="option.id" x-model="surveyAnswers[currentQuestion.id]" class="text-indigo-500 mr-3">
+                                            <span x-text="option.text"></span>
+                                        </label>
+                                    </template>
+                                </div>
+                                
+                                <!-- Multiple Choice -->
+                                <div x-show="currentQuestion.type === 'multiple'" class="space-y-3">
+                                    <template x-for="option in currentQuestion.options" :key="option.id">
+                                        <label class="flex items-center p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
+                                            <input type="checkbox" :value="option.id" @change="handleMultipleChoice($event, currentQuestion.id)" class="text-indigo-500 mr-3">
+                                            <span x-text="option.text"></span>
+                                        </label>
+                                    </template>
+                                </div>
+                                
+                                <!-- Text -->
+                                <div x-show="currentQuestion.type === 'text'">
+                                    <textarea x-model="surveyAnswers[currentQuestion.id]" rows="4" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400" placeholder="Deine Antwort..."></textarea>
+                                </div>
+                                
+                                <!-- Scale -->
+                                <div x-show="currentQuestion.type === 'scale'" class="mt-4">
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-sm text-gray-400">Gar nicht wichtig</span>
+                                        <span class="text-sm text-gray-400">Sehr wichtig</span>
+                                    </div>
+                                    <input type="range" min="1" max="10" x-model="surveyAnswers[currentQuestion.id]" class="w-full">
+                                    <div class="text-center mt-2">
+                                        <span class="text-2xl font-bold text-indigo-400" x-text="surveyAnswers[currentQuestion.id] || 5"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Navigation -->
+                            <div class="flex justify-between">
+                                <button @click="previousQuestion()" :disabled="currentQuestionIndex === 0" :class="currentQuestionIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors">
+                                    Zurück
+                                </button>
+                                <div class="flex space-x-3">
+                                    <button @click="saveSurveyProgress()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors">
+                                        Speichern
+                                    </button>
+                                    <button x-show="currentQuestionIndex < currentSurvey.questions.length - 1" @click="nextQuestion()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors">
+                                        Weiter
+                                    </button>
+                                    <button x-show="currentQuestionIndex === currentSurvey.questions.length - 1" @click="submitSurvey()" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-semibold btn-glow">
+                                        Abschließen
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Umfrage Historie -->
+                    <div x-show="surveyView === 'history'" class="glass-card rounded-xl p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-semibold">Abgeschlossene Umfragen</h3>
+                            <button @click="surveyView = 'list'" class="text-sm text-gray-400 hover:text-orange-400">
+                                Zurück zu verfügbaren Umfragen
+                            </button>
+                        </div>
+                        
+                        <div x-show="surveyHistory.length > 0" class="space-y-3">
+                            <template x-for="survey in surveyHistory" :key="survey.id">
+                                <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                                    <div>
+                                        <h4 class="font-medium" x-text="survey.title"></h4>
+                                        <p class="text-sm text-gray-400" x-text="survey.company + ' • ' + new Date(survey.completedAt).toLocaleDateString('de-DE')"></p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-semibold text-green-400" x-text="'€' + survey.reward.toFixed(2)"></p>
+                                        <p class="text-xs text-gray-400">Erhalten</p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <div x-show="surveyHistory.length === 0" class="text-center py-8">
+                            <p class="text-gray-400">Du hast noch keine Umfragen abgeschlossen.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Auszahlungen Tab -->
+                <div x-show="activeTab === 'earnings'" class="space-y-6">
+                    
+                    <!-- Auszahlung beantragen -->
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-xl font-semibold mb-6">Auszahlung beantragen</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg p-6 mb-6">
+                                    <h4 class="text-white font-semibold mb-2">Verfügbarer Betrag</h4>
+                                    <p class="text-4xl font-bold text-white" x-text="'€' + earnings.available.toFixed(2)"></p>
+                                    <p class="text-orange-100 text-sm">Mindestbetrag: €10,00</p>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-2">Auszahlungsbetrag</label>
+                                        <input type="number" x-model="payoutAmount" :max="earnings.available" min="10" step="0.01" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-2">Auszahlungsmethode</label>
+                                        <select x-model="payoutMethod" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                            <option value="paypal">PayPal</option>
+                                            <option value="bank">Banküberweisung</option>
+                                            <option value="crypto">Bitcoin</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button @click="requestPayout()" :disabled="earnings.available < 10" :class="earnings.available >= 10 ? 'btn-glow' : 'opacity-50 cursor-not-allowed'" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-lg font-semibold">
+                                        Auszahlung beantragen
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold mb-4">Auszahlungshistorie</h4>
+                                <div class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                                    <template x-for="payout in payoutHistory" :key="payout.id">
+                                        <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+                                            <div>
+                                                <p class="font-medium" x-text="'€' + payout.amount.toFixed(2)"></p>
+                                                <p class="text-sm text-gray-400" x-text="payout.date"></p>
+                                            </div>
+                                            <span :class="payout.status === 'completed' ? 'bg-green-500' : payout.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-500'" class="px-2 py-1 text-xs rounded-full text-white" x-text="payout.status === 'completed' ? 'Abgeschlossen' : payout.status === 'pending' ? 'In Bearbeitung' : 'Ausstehend'"></span>
+                                        </div>
+                                    </template>
+                                    <div x-show="payoutHistory.length === 0" class="text-center py-4 text-gray-400">
+                                        Noch keine Auszahlungen beantragt.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Aktivitäts-Feed Tab -->
+                <div x-show="activeTab === 'activity'" class="space-y-6">
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-xl font-semibold mb-6">Datennutzungs-Aktivitäten</h3>
+                        
+                        <div class="space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
+                            <template x-for="activity in activities" :key="activity.id">
+                                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-lg">
+                                    <div class="w-10 h-10 bg-orange-500 bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <svg x-show="activity.type === 'data_usage'" class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <svg x-show="activity.type === 'survey_completed'" class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                        </svg>
+                                        <svg x-show="activity.type === 'bonus'" class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-medium" x-text="activity.title"></p>
+                                        <p class="text-sm text-gray-400" x-text="activity.description"></p>
+                                        <div class="flex items-center justify-between mt-2">
+                                            <span class="text-xs text-gray-500" x-text="activity.timestamp"></span>
+                                            <span class="text-sm font-semibold text-orange-400" x-text="'+€' + activity.earning.toFixed(2)"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="activities.length === 0" class="text-center py-8 text-gray-400">
+                                Noch keine Aktivitäten vorhanden.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Profil Tab -->
+                <div x-show="activeTab === 'profile'" class="space-y-6">
+                    
+                    <!-- Persönliche Informationen -->
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-xl font-semibold mb-6">Persönliche Informationen</h3>
+                        
+                        <form @submit.prevent="updateProfile()" class="space-y-6">
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Vorname</label>
+                                    <input type="text" x-model="user.firstName" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Nachname</label>
+                                    <input type="text" x-model="user.lastName" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">E-Mail</label>
+                                <input type="email" x-model="user.email" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Geburtsdatum</label>
+                                <input type="date" x-model="user.birthDate" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Land</label>
+                                <select x-model="user.country" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                    <option value="DE">Deutschland</option>
+                                    <option value="AT">Österreich</option>
+                                    <option value="CH">Schweiz</option>
+                                    <option value="OTHER">Anderes</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg font-semibold btn-glow">
+                                Profil aktualisieren
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Sicherheitseinstellungen -->
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-xl font-semibold mb-6">Sicherheit & Datenschutz</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                                <div>
+                                    <h4 class="font-medium">Zwei-Faktor-Authentifizierung</h4>
+                                    <p class="text-sm text-gray-400">Zusätzliche Sicherheit für dein Konto</p>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                                <div>
+                                    <h4 class="font-medium">E-Mail-Benachrichtigungen</h4>
+                                    <p class="text-sm text-gray-400">Über neue Verdienstmöglichkeiten informieren</p>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                                <div>
+                                    <h4 class="font-medium">Datenexport</h4>
+                                    <p class="text-sm text-gray-400">Alle deine Daten als ZIP-Datei herunterladen</p>
+                                </div>
+                                <button class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                    Export anfordern
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-20 rounded-lg">
+                                <div>
+                                    <h4 class="font-medium text-red-400">Konto löschen</h4>
+                                    <p class="text-sm text-gray-400">Alle Daten unwiderruflich löschen</p>
+                                </div>
+                                <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                    Konto löschen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alpine.js Dashboard Controller mit API-Integration -->
+    <script>
+        function dashboardController() {
+            return {
+                // Aktiver Tab
+                activeTab: 'overview',
+                
+                // Loading State
+                isLoading: true,
+                
+                // Benutzerdaten (werden vom Server geladen)
+                user: {
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    birthDate: '',
+                    country: 'DE',
+                    joinDate: ''
+                },
+                
+                // Daten werden beim Init geladen
+                earnings: {
+                    thisMonth: 0,
+                    total: 0,
+                    available: 0,
+                    pending: 0
+                },
+                
+                payoutAmount: 0,
+                payoutMethod: 'paypal',
+                payoutHistory: [],
+                dataTypes: [],
+                activities: [],
+                availableSurveys: [],
+                inProgressSurveys: [],
+                surveyHistory: [],
+                
+                // Survey Management
+                surveyView: 'list',
+                currentSurvey: null,
+                currentSurveyResponse: null,
+                surveyInProgress: false,
+                currentQuestion: null,
+                currentQuestionIndex: 0,
+                surveyAnswers: {},
+                
+                // UI States
+                unreadNotifications: 0,
+                earningsChart: null,
+                
+                // Initialisierung mit echten Daten
+                async init() {
+                    try {
+                        this.isLoading = true;
+                        
+                        // Lade User-Daten
+                        await this.loadUserData();
+                        
+                        // Lade Dashboard-Daten
+                        await Promise.all([
+                            this.loadEarnings(),
+                            this.loadDataTypes(),
+                            this.loadActivities(),
+                            this.loadSurveys(),
+                            this.loadPayoutHistory()
+                        ]);
+                        
+                        // Chart initialisieren
+                        this.$nextTick(() => {
+                            this.initEarningsChart();
+                        });
+                        
+                        this.isLoading = false;
+                    } catch (error) {
+                        console.error('Dashboard init error:', error);
+                        this.isLoading = false;
+                        
+                        // Bei Fehler zum Login
+                        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+                            window.location.href = 'login.html';
+                        }
+                    }
+                },
+                
+                // ===== ECHTE API-CALLS =====
+                
+                // Lade User-Daten - MIT ECHTER API!
+                async loadUserData() {
+                    try {
+                        const userData = await DataFairAPI.getProfile();
+                        this.user = {
+                            firstName: userData.firstName || '',
+                            lastName: userData.lastName || '',
+                            email: userData.email || '',
+                            birthDate: userData.birthDate || '',
+                            country: userData.country || 'DE',
+                            joinDate: userData.joinDate || ''
+                        };
+                        console.log('✅ Profile loaded:', userData);
+                    } catch (error) {
+                        console.error('❌ Error loading profile:', error);
+                        // Bei Auth-Fehler zum Login
+                        if (error.message.includes('401')) {
+                            window.location.href = 'login.html';
+                        }
+                    }
+                },
+                
+                // Lade Datentypen - MIT ECHTER API!
+                async loadDataTypes() {
+                    try {
+                        this.dataTypes = await DataFairAPI.getDataTypes();
+                        console.log('✅ Data types loaded:', this.dataTypes);
+                    } catch (error) {
+                        console.error('❌ Error loading data types:', error);
+                        // Fallback zu Mock-Daten bei Fehler
+                        this.dataTypes = [
+                            {id: 1, name: 'Shopping-Verhalten', description: 'Online-Einkäufe, besuchte Shops', icon: '🛒', monthlyValue: 12.00, enabled: false},
+                            {id: 2, name: 'Demografische Daten', description: 'Alter, Geschlecht, Wohnort', icon: '👤', monthlyValue: 8.50, enabled: false}
+                        ];
+                    }
+                },
+                
+                // Datentyp aktivieren/deaktivieren - MIT ECHTER API!
+                async toggleDataType(dataType) {
+                    try {
+                        const newStatus = !dataType.enabled;
+                        
+                        // API-Call
+                        await DataFairAPI.updateDataPermission(dataType.id, newStatus);
+                        
+                        // Update lokale Daten
+                        dataType.enabled = newStatus;
+                        
+                        // Feedback-Nachricht
+                        this.showNotification(
+                            `${dataType.name} ${newStatus ? 'aktiviert' : 'deaktiviert'}!`, 
+                            'success'
+                        );
+                        
+                        // Lade Verdienste neu, da sich der monatliche Wert geändert hat
+                        await this.loadEarnings();
+                        
+                        console.log(`✅ Data type ${dataType.name} toggled to:`, newStatus);
+                        
+                    } catch (error) {
+                        console.error('❌ Error toggling data type:', error);
+                        this.showNotification('Fehler beim Aktualisieren', 'error');
+                    }
+                },
+                
+                // Lade Verdienste - MIT ECHTER API!
+                async loadEarnings() {
+                    try {
+                        this.earnings = await DataFairAPI.getEarnings();
+                        console.log('✅ Earnings loaded:', this.earnings);
+                    } catch (error) {
+                        console.error('❌ Error loading earnings:', error);
+                        // Fallback zu Mock-Daten bei Fehler
+                        this.earnings = {
+                            thisMonth: 0,
+                            total: 0,
+                            available: 0,
+                            pending: 0,
+                            monthlyPotential: 0,
+                            monthlyData: [0, 0, 0, 0, 0, 0]
+                        };
+                    }
+                },
+                
+                // Lade Auszahlungshistorie - MIT ECHTER API!
+                async loadPayoutHistory() {
+                    try {
+                        this.payoutHistory = await DataFairAPI.getPayouts();
+                        console.log('✅ Payout history loaded:', this.payoutHistory);
+                    } catch (error) {
+                        console.error('❌ Error loading payout history:', error);
+                        this.payoutHistory = [];
+                    }
+                },
+                
+                // Auszahlung beantragen - MIT ECHTER API!
+                async requestPayout() {
+                    if (this.payoutAmount < 10) {
+                        this.showNotification('Mindestbetrag für Auszahlung ist €10.00', 'error');
+                        return;
+                    }
+                    
+                    if (this.payoutAmount > this.earnings.available) {
+                        this.showNotification('Betrag überschreitet verfügbares Guthaben', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        const payout = await DataFairAPI.requestPayout(this.payoutAmount, this.payoutMethod);
+                        
+                        this.showNotification(`Auszahlung von €${this.payoutAmount} wurde beantragt!`, 'success');
+                        
+                        // Lade Daten neu
+                        await this.loadEarnings();
+                        await this.loadPayoutHistory();
+                        
+                        // Reset Form
+                        this.payoutAmount = 0;
+                        
+                        console.log('✅ Payout requested:', payout);
+                        
+                    } catch (error) {
+                        console.error('❌ Payout error:', error);
+                        this.showNotification(error.message || 'Fehler bei der Auszahlung', 'error');
+                    }
+                },
+                
+                // Test-Verdienste generieren (für Entwicklung)
+                async generateTestEarnings() {
+                    try {
+                        const result = await DataFairAPI.generateMonthlyEarnings();
+                        this.showNotification(`${result.message}! Daten werden neu geladen...`, 'success');
+                        
+                        // Lade alle Daten neu
+                        await Promise.all([
+                            this.loadEarnings(),
+                            this.loadActivities()
+                        ]);
+                        
+                        console.log('✅ Test earnings generated:', result);
+                        
+                    } catch (error) {
+                        console.error('❌ Error generating earnings:', error);
+                        this.showNotification('Fehler beim Generieren der Verdienste', 'error');
+                    }
+                },
+                
+                // ===== MOCK-DATEN FÜR NOCH NICHT IMPLEMENTIERTE APIS =====
+                
+                // Lade Aktivitäten
+                async loadActivities() {
+                    try {
+                        this.activities = await DataFairAPI.getActivities();
+                        console.log('✅ Activities loaded:', this.activities);
+                    } catch (error) {
+                        console.error('❌ Error loading activities:', error);
+                        this.activities = [];
+                    }
+                },
+                
+                // Lade Umfragen
+                async loadSurveys() {
+                    try {
+                        // TODO: Ersetzen durch echte API
+                        // const surveys = await DataFairAPI.getSurveys();
+                        // this.availableSurveys = surveys.available || [];
+                        // this.inProgressSurveys = surveys.inProgress || [];
+                        
+                        // Mock-Daten
+                        this.availableSurveys = [];
+                        this.inProgressSurveys = [];
+                        
+                        console.log('✅ Surveys loaded (mock)');
+                    } catch (error) {
+                        console.error('❌ Error loading surveys:', error);
+                        this.availableSurveys = [];
+                        this.inProgressSurveys = [];
+                    }
+                },
+                
+                // Profil aktualisieren - MIT ECHTER API!
+                async updateProfile() {
+                    try {
+                        await DataFairAPI.updateProfile(this.user);
+                        this.showNotification('Profil wurde erfolgreich aktualisiert!', 'success');
+                        console.log('✅ Profile updated');
+                    } catch (error) {
+                        console.error('❌ Profile update error:', error);
+                        this.showNotification('Fehler beim Aktualisieren', 'error');
+                    }
+                },
+                
+                // Logout - MIT ECHTER API!
+                async logout() {
+                    try {
+                        await DataFairAPI.logout();
+                        window.location.href = 'login.html';
+                    } catch (error) {
+                        console.error('❌ Logout error:', error);
+                        // Trotzdem ausloggen
+                        window.location.href = 'login.html';
+                    }
+                },
+                
+                // ===== MOCK-FUNKTIONEN (Werden später implementiert) =====
+                
+                // Survey Funktionen
+                async viewSurveyDetails(surveyId) {
+                    // TODO: Implement
+                    console.log('Survey details for:', surveyId);
+                },
+                
+                async startSurvey() {
+                    // TODO: Implement
+                    console.log('Starting survey');
+                },
+                
+                async loadSurveyHistory() {
+                    // TODO: Implement
+                    this.surveyView = 'history';
+                },
+                
+                // Verdienst-Chart mit echten Daten
+                initEarningsChart() {
+                    const ctx = document.getElementById('earningsChart');
+                    if (!ctx) return;
+                    
+                    // Verwende echte Daten falls verfügbar
+                    const monthlyData = this.earnings.monthlyData || [0, 0, 0, 0, 0, 0];
+                    const labels = this.earnings.chartLabels || ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun'];
+                    
+                    this.earningsChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Monatlicher Verdienst',
+                                data: monthlyData,
+                                borderColor: '#f97316',
+                                backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#f97316',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 6,
+                                pointHoverRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        color: '#374151',
+                                        borderColor: '#4b5563'
+                                    },
+                                    ticks: {
+                                        color: '#9ca3af'
+                                    }
+                                },
+                                y: {
+                                    grid: {
+                                        color: '#374151',
+                                        borderColor: '#4b5563'
+                                    },
+                                    ticks: {
+                                        color: '#9ca3af',
+                                        callback: function(value) {
+                                            return '€' + value.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            elements: {
+                                point: {
+                                    hoverBackgroundColor: '#f59e0b'
+                                }
+                            }
+                        }
+                    });
+                },
+                
+                // Notification-System
+                showNotification(message, type = 'info') {
+                    // Vereinfachte Lösung mit Alert (später durch Toast-System ersetzen)
+                    console.log(`${type.toUpperCase()}: ${message}`);
+                    
+                    // Temporäre visuelle Benachrichtigung
+                    const notification = document.createElement('div');
+                    notification.className = `fixed top-20 right-4 z-50 p-4 rounded-lg text-white ${
+                        type === 'success' ? 'bg-green-500' : 
+                        type === 'error' ? 'bg-red-500' : 
+                        'bg-blue-500'
+                    }`;
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    
+                    // Nach 3 Sekunden entfernen
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 3000);
+                }
+            }
+        }
+    </script>
+    
+</body>
+</html>

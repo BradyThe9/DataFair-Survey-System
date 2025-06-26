@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="de" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrierung - DataFair</title>
+    
+    <!-- Tailwind CSS von CDN laden -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="/assets/js/api.js"></script>
+
+
+
+    <!-- Alpine.js von CDN laden für Interaktivität -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Benutzerdefinierte Styles -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        }
+        
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(251, 146, 60, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.3);
+            border-color: #f97316;
+        }
+        
+        /* Animationen für Formular-Feedback */
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Password Strength Indicator */
+        .strength-weak { background-color: #ef4444; }
+        .strength-medium { background-color: #f59e0b; }
+        .strength-strong { background-color: #10b981; }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white font-sans antialiased min-h-screen">
+    
+    <!-- Navigation Bar - vereinfacht für Registrierungsseite -->
+    <nav class="fixed top-0 w-full z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                
+                <!-- Logo - Link zurück zur Startseite -->
+                <a href="index.html" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
+                        <span class="text-xl font-bold text-white">DF</span>
+                    </div>
+                    <span class="text-xl font-bold text-white">DataFair</span>
+                </a>
+                
+                <!-- Login Link für bestehende Nutzer -->
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-400 text-sm">Schon registriert?</span>
+                    <a href="login.html" class="text-orange-400 hover:text-orange-300 font-semibold">Anmelden</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hauptbereich der Registrierung -->
+    <div class="pt-24 pb-12 px-4 min-h-screen flex items-center">
+        <div class="max-w-4xl mx-auto w-full">
+            
+            <!-- Registrierungs-Container -->
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                
+                <!-- Linke Seite: Motivationstext und Vorteile -->
+                <div class="fade-in">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                        Starte jetzt und <span class="bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">verdiene fair</span>
+                    </h1>
+                    
+                    <p class="text-xl text-gray-300 mb-8 leading-relaxed">
+                        Werde Teil einer transparenten Community, die faire Entlohnung für wertvolle Daten bietet.
+                    </p>
+                    
+                    <!-- Vorteile Liste -->
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">Sofortiger Zugang zu deinem persönlichen Dashboard</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">Vollständige Kontrolle über deine Daten</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">Faire Vergütung ab dem ersten Tag</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">Jederzeit kündbar - keine Bindung</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Vertrauenshinweise -->
+                    <div class="flex flex-wrap gap-4 text-sm text-gray-400">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>SSL-verschlüsselt</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>DSGVO-konform</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>100% kostenlos</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rechte Seite: Registrierungsformular -->
+                <div class="glass-card rounded-2xl p-8 fade-in">
+                    
+                    <!-- Alpine.js Controller für das gesamte Formular -->
+                    <div x-data="registrationForm()">
+                        
+                        <h2 class="text-2xl font-bold mb-6 text-center">Kostenloses Konto erstellen</h2>
+                        
+                        <!-- Registrierungsformular -->
+                        <form @submit.prevent="submitForm()" class="space-y-6">
+                            
+                            <!-- Vorname und Nachname in einer Zeile -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="firstName" class="block text-sm font-medium text-gray-300 mb-2">Vorname</label>
+                                    <input 
+                                        type="text" 
+                                        id="firstName" 
+                                        x-model="form.firstName"
+                                        :class="{'border-red-500 shake': errors.firstName}"
+                                        class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 input-focus"
+                                        placeholder="Max"
+                                        required
+                                    >
+                                    <p x-show="errors.firstName" x-text="errors.firstName" class="text-red-400 text-sm mt-1"></p>
+                                </div>
+                                
+                                <div>
+                                    <label for="lastName" class="block text-sm font-medium text-gray-300 mb-2">Nachname</label>
+                                    <input 
+                                        type="text" 
+                                        id="lastName" 
+                                        x-model="form.lastName"
+                                        :class="{'border-red-500 shake': errors.lastName}"
+                                        class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 input-focus"
+                                        placeholder="Mustermann"
+                                        required
+                                    >
+                                    <p x-show="errors.lastName" x-text="errors.lastName" class="text-red-400 text-sm mt-1"></p>
+                                </div>
+                            </div>
+                            
+                            <!-- E-Mail Adresse -->
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-300 mb-2">E-Mail Adresse</label>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    x-model="form.email"
+                                    @blur="validateEmail()"
+                                    :class="{'border-red-500 shake': errors.email, 'border-green-500': form.email && !errors.email}"
+                                    class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 input-focus"
+                                    placeholder="max@example.com"
+                                    required
+                                >
+                                <p x-show="errors.email" x-text="errors.email" class="text-red-400 text-sm mt-1"></p>
+                            </div>
+                            
+                            <!-- Passwort mit Stärke-Anzeige -->
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Passwort</label>
+                                <div class="relative">
+                                    <input 
+                                        :type="showPassword ? 'text' : 'password'" 
+                                        id="password" 
+                                        x-model="form.password"
+                                        @input="checkPasswordStrength()"
+                                        :class="{'border-red-500 shake': errors.password}"
+                                        class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 input-focus pr-12"
+                                        placeholder="Mindestens 8 Zeichen"
+                                        required
+                                    >
+                                    <!-- Passwort anzeigen/verstecken Button -->
+                                    <button 
+                                        type="button" 
+                                        @click="showPassword = !showPassword"
+                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                                    >
+                                        <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        <svg x-show="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <!-- Passwort-Stärke Anzeige -->
+                                <div x-show="form.password" class="mt-2">
+                                    <div class="flex space-x-2 mb-2">
+                                        <div :class="passwordStrength >= 1 ? 'strength-weak' : 'bg-gray-600'" class="h-2 flex-1 rounded"></div>
+                                        <div :class="passwordStrength >= 2 ? 'strength-medium' : 'bg-gray-600'" class="h-2 flex-1 rounded"></div>
+                                        <div :class="passwordStrength >= 3 ? 'strength-strong' : 'bg-gray-600'" class="h-2 flex-1 rounded"></div>
+                                    </div>
+                                    <p class="text-sm text-gray-400" x-text="passwordStrengthText"></p>
+                                </div>
+                                
+                                <p x-show="errors.password" x-text="errors.password" class="text-red-400 text-sm mt-1"></p>
+                            </div>
+                            
+                            <!-- Passwort bestätigen -->
+                            <div>
+                                <label for="confirmPassword" class="block text-sm font-medium text-gray-300 mb-2">Passwort bestätigen</label>
+                                <input 
+                                    type="password" 
+                                    id="confirmPassword" 
+                                    x-model="form.confirmPassword"
+                                    @blur="validatePasswordMatch()"
+                                    :class="{'border-red-500 shake': errors.confirmPassword, 'border-green-500': form.confirmPassword && form.password === form.confirmPassword}"
+                                    class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 input-focus"
+                                    placeholder="Passwort wiederholen"
+                                    required
+                                >
+                                <p x-show="errors.confirmPassword" x-text="errors.confirmPassword" class="text-red-400 text-sm mt-1"></p>
+                            </div>
+                            
+                            <!-- Alter (für DSGVO-Konformität) -->
+                            <div>
+                                <label for="birthDate" class="block text-sm font-medium text-gray-300 mb-2">Geburtsdatum</label>
+                                <input 
+                                    type="date" 
+                                    id="birthDate" 
+                                    x-model="form.birthDate"
+                                    @change="validateAge()"
+                                    :class="{'border-red-500 shake': errors.birthDate}"
+                                    class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white input-focus"
+                                    required
+                                >
+                                <p x-show="errors.birthDate" x-text="errors.birthDate" class="text-red-400 text-sm mt-1"></p>
+                            </div>
+                            
+                            <!-- Checkboxen für AGB und Datenschutz -->
+                            <div class="space-y-3">
+                                <div class="flex items-start space-x-3">
+                                    <input 
+                                        type="checkbox" 
+                                        id="terms" 
+                                        x-model="form.acceptTerms"
+                                        class="mt-1 w-4 h-4 text-orange-500 border-gray-600 rounded focus:ring-orange-500 focus:ring-2 bg-gray-800"
+                                        required
+                                    >
+                                    <label for="terms" class="text-sm text-gray-300">
+                                        Ich akzeptiere die <a href="#" class="text-orange-400 hover:text-orange-300 underline">Allgemeinen Geschäftsbedingungen</a>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <input 
+                                        type="checkbox" 
+                                        id="privacy" 
+                                        x-model="form.acceptPrivacy"
+                                        class="mt-1 w-4 h-4 text-orange-500 border-gray-600 rounded focus:ring-orange-500 focus:ring-2 bg-gray-800"
+                                        required
+                                    >
+                                    <label for="privacy" class="text-sm text-gray-300">
+                                        Ich habe die <a href="#" class="text-orange-400 hover:text-orange-300 underline">Datenschutzerklärung</a> gelesen und verstanden
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <input 
+                                        type="checkbox" 
+                                        id="newsletter" 
+                                        x-model="form.newsletter"
+                                        class="mt-1 w-4 h-4 text-orange-500 border-gray-600 rounded focus:ring-orange-500 focus:ring-2 bg-gray-800"
+                                    >
+                                    <label for="newsletter" class="text-sm text-gray-300">
+                                        Ich möchte über neue Verdienstmöglichkeiten per E-Mail informiert werden (optional)
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <button 
+                                type="submit" 
+                                :disabled="isSubmitting"
+                                :class="isSubmitting ? 'opacity-50 cursor-not-allowed' : 'btn-glow'"
+                                class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-4 rounded-lg font-semibold text-lg transition-all duration-300"
+                            >
+                                <span x-show="!isSubmitting">Kostenloses Konto erstellen</span>
+                                <span x-show="isSubmitting" class="flex items-center justify-center space-x-2">
+                                    <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Wird erstellt...</span>
+                                </span>
+                            </button>
+                            
+                        </form>
+                        
+                        <!-- Login Link -->
+                        <div class="mt-6 text-center">
+                            <p class="text-gray-400">
+                                Bereits ein Konto? 
+                                <a href="login.html" class="text-orange-400 hover:text-orange-300 font-semibold">Hier anmelden</a>
+                            </p>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alpine.js JavaScript für Formular-Logik -->
+<script>
+    function registrationForm() {
+        return {
+            // Formular-Daten
+            form: {
+                firstName: '',
+                lastName: '',
+                email: '',
+                password: '',
+                confirmPassword: '',
+                birthDate: '',
+                acceptTerms: false,
+                acceptPrivacy: false,
+                newsletter: false,
+                country: 'DE'
+            },
+            
+            // Fehlermeldungen
+            errors: {},
+            
+            // UI-Zustand
+            showPassword: false,
+            isSubmitting: false,
+            passwordStrength: 0,
+            passwordStrengthText: '',
+            
+            // Initialisierung
+            init() {
+                // Wenn bereits eingeloggt, zum Dashboard umleiten
+                redirectIfAuthenticated();
+            },
+            
+            // E-Mail Validierung
+            validateEmail() {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (this.form.email && !emailRegex.test(this.form.email)) {
+                    this.errors.email = 'Bitte gib eine gültige E-Mail Adresse ein';
+                } else {
+                    delete this.errors.email;
+                }
+            },
+            
+            // Passwort-Stärke prüfen
+            checkPasswordStrength() {
+                const password = this.form.password;
+                let strength = 0;
+                let text = '';
+                
+                if (password.length >= 8) strength++;
+                if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+                if (password.match(/[0-9]/) && password.match(/[^a-zA-Z0-9]/)) strength++;
+                
+                this.passwordStrength = strength;
+                
+                switch(strength) {
+                    case 0:
+                    case 1:
+                        text = 'Schwaches Passwort - verwende mindestens 8 Zeichen';
+                        break;
+                    case 2:
+                        text = 'Mittleres Passwort - füge Sonderzeichen hinzu für mehr Sicherheit';
+                        break;
+                    case 3:
+                        text = 'Starkes Passwort - perfekt!';
+                        break;
+                }
+                
+                this.passwordStrengthText = text;
+            },
+            
+            // Passwort-Übereinstimmung prüfen
+            validatePasswordMatch() {
+                if (this.form.password !== this.form.confirmPassword) {
+                    this.errors.confirmPassword = 'Passwörter stimmen nicht überein';
+                } else {
+                    delete this.errors.confirmPassword;
+                }
+            },
+            
+            // Alter validieren (muss mindestens 16 sein)
+            validateAge() {
+                const birthDate = new Date(this.form.birthDate);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                
+                if (age < 16) {
+                    this.errors.birthDate = 'Du musst mindestens 16 Jahre alt sein';
+                } else {
+                    delete this.errors.birthDate;
+                }
+            },
+            
+            // Formular validieren
+            validateForm() {
+                this.errors = {};
+                
+                // Pflichtfelder prüfen
+                if (!this.form.firstName.trim()) this.errors.firstName = 'Vorname ist erforderlich';
+                if (!this.form.lastName.trim()) this.errors.lastName = 'Nachname ist erforderlich';
+                if (!this.form.email.trim()) this.errors.email = 'E-Mail ist erforderlich';
+                if (!this.form.password) this.errors.password = 'Passwort ist erforderlich';
+                if (!this.form.confirmPassword) this.errors.confirmPassword = 'Passwort bestätigen ist erforderlich';
+                if (!this.form.birthDate) this.errors.birthDate = 'Geburtsdatum ist erforderlich';
+                
+                // Spezielle Validierungen
+                this.validateEmail();
+                this.validatePasswordMatch();
+                this.validateAge();
+                
+                // Passwort-Stärke prüfen
+                if (this.form.password && this.passwordStrength < 2) {
+                    this.errors.password = 'Passwort ist zu schwach - verwende mindestens 8 Zeichen mit Groß-/Kleinbuchstaben';
+                }
+                
+                // Checkboxen prüfen
+                if (!this.form.acceptTerms) this.errors.terms = 'Du musst den AGB zustimmen';
+                if (!this.form.acceptPrivacy) this.errors.privacy = 'Du musst der Datenschutzerklärung zustimmen';
+                
+                return Object.keys(this.errors).length === 0;
+            },
+            
+            // Formular absenden - JETZT MIT ECHTER API!
+            async submitForm() {
+                if (!this.validateForm()) {
+                    // Fehler-Animation für alle Felder mit Fehlern
+                    Object.keys(this.errors).forEach(field => {
+                        const element = document.getElementById(field) || document.querySelector(`[name="${field}"]`);
+                        if (element) {
+                            element.classList.add('shake');
+                            setTimeout(() => element.classList.remove('shake'), 500);
+                        }
+                    });
+                    return;
+                }
+                
+                this.isSubmitting = true;
+                this.errors = {};
+                
+                try {
+                    // Daten für die API vorbereiten
+                    const userData = {
+                        email: this.form.email.trim(),
+                        password: this.form.password,
+                        first_name: this.form.firstName.trim(),
+                        last_name: this.form.lastName.trim(),
+                        birth_date: this.form.birthDate,
+                        country: this.form.country,
+                        newsletter: this.form.newsletter
+                    };
+                    
+                    // API Registrierung aufrufen
+                    const result = await DataFairAPI.register(userData);
+                    
+                    // Erfolg!
+                    alert(`Willkommen bei DataFair, ${result.user.first_name}! Du wirst jetzt zu deinem Dashboard weitergeleitet.`);
+                    
+                    // Zum Dashboard weiterleiten
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                    
+                } catch (error) {
+                    // Fehlerbehandlung
+                    if (error.message.includes('bereits registriert')) {
+                        this.errors.email = 'Diese E-Mail-Adresse ist bereits registriert';
+                    } else {
+                        this.errors.general = error.message || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.';
+                    }
+                    
+                    // Fehler-Animation
+                    if (this.errors.email) {
+                        const emailElement = document.getElementById('email');
+                        if (emailElement) {
+                            emailElement.classList.add('shake');
+                            setTimeout(() => emailElement.classList.remove('shake'), 500);
+                        }
+                    }
+                } finally {
+                    this.isSubmitting = false;
+                }
+            }
+        }
+    }
+</script>
+    
+</body>
+</html><!DOCTYPE html>
+<html lang="de" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrierung - DataFair</title>
+    
+    <!-- Tailwind CSS von CDN laden -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js von CDN laden für Interaktivität -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Benutzer

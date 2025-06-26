@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="de" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Für Unternehmen - DataFair</title>
+    
+    <!-- Tailwind CSS von CDN laden -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js von CDN laden für Interaktivität -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Benutzerdefinierte Styles -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        }
+        
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(251, 146, 60, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .enterprise-card {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(79, 70, 229, 0.2);
+        }
+        
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(251, 146, 60, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .pricing-card.featured {
+            background: linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+            border: 2px solid #f97316;
+            transform: scale(1.05);
+        }
+        
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-8px);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in-left {
+            animation: slideInLeft 0.8s ease-out;
+        }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .slide-in-right {
+            animation: slideInRight 0.8s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* Custom scrollbar für Code-Beispiele */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1f2937;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        
+        /* Gradient text effect */
+        .gradient-text {
+            background: linear-gradient(135deg, #f97316 0%, #f59e0b 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Pulse animation for testimonials */
+        .pulse-soft {
+            animation: pulseSoft 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulseSoft {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white font-sans antialiased">
+    
+    <!-- Navigation Bar -->
+    <nav class="fixed top-0 w-full z-50 glass-card" x-data="{ mobileOpen: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <a href="index.html" class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
+                            <span class="text-xl font-bold text-white">DF</span>
+                        </div>
+                        <span class="text-xl font-bold text-white">DataFair</span>
+                    </a>
+                </div>
+                
+                <!-- Navigation Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#solutions" class="text-gray-300 hover:text-orange-400 transition-colors duration-200">Lösungen</a>
+                    <a href="#pricing" class="text-gray-300 hover:text-orange-400 transition-colors duration-200">Preise</a>
+                    <a href="#api" class="text-gray-300 hover:text-orange-400 transition-colors duration-200">API</a>
+                    <a href="#contact" class="text-gray-300 hover:text-orange-400 transition-colors duration-200">Kontakt</a>
+                    
+                    <div class="flex items-center space-x-3">
+                        <a href="login.html" class="text-gray-300 hover:text-orange-400 font-semibold">Anmelden</a>
+                        <button onclick="scrollToContact()" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2 rounded-lg btn-glow font-semibold">
+                            Demo anfragen
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <button @click="mobileOpen = !mobileOpen" class="md:hidden text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile Navigation Menu -->
+            <div x-show="mobileOpen" x-transition class="md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 glass-card mt-2 rounded-lg">
+                    <a href="#solutions" class="block px-3 py-2 text-gray-300 hover:text-orange-400">Lösungen</a>
+                    <a href="#pricing" class="block px-3 py-2 text-gray-300 hover:text-orange-400">Preise</a>
+                    <a href="#api" class="block px-3 py-2 text-gray-300 hover:text-orange-400">API</a>
+                    <a href="#contact" class="block px-3 py-2 text-gray-300 hover:text-orange-400">Kontakt</a>
+                    <a href="login.html" class="block px-3 py-2 text-gray-300 hover:text-orange-400">Anmelden</a>
+                    <button onclick="scrollToContact()" class="w-full mt-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2 rounded-lg font-semibold">
+                        Demo anfragen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="pt-24 pb-16 px-4 fade-in">
+        <div class="max-w-7xl mx-auto">
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                
+                <!-- Text Content -->
+                <div class="slide-in-left">
+                    <div class="inline-flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-amber-500 bg-opacity-10 border border-orange-500 border-opacity-20 rounded-full px-4 py-2 mb-6">
+                        <span class="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></span>
+                        <span class="text-orange-400 text-sm font-semibold">Ethische Marktforschung</span>
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                        Marktforschung mit <span class="gradient-text">fairer Datenbeschaffung</span>
+                    </h1>
+                    
+                    <p class="text-xl text-gray-300 mb-8 leading-relaxed">
+                        Erhalten Sie hochqualitative, ethisch beschaffte Nutzerdaten direkt von freiwilligen Teilnehmern. 
+                        Transparenter, günstiger und vertrauensvoller als traditionelle Marktforschungsmethoden.
+                    </p>
+                    
+                    <!-- Key Benefits -->
+                    <div class="grid sm:grid-cols-2 gap-4 mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-green-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">Bis zu 70% Kostenersparnis</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">Real-time API-Zugang</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-purple-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">DSGVO-konforme Daten</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-orange-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">Ethisch & transparent</span>
+                        </div>
+                    </div>
+                    
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="scrollToContact()" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-8 py-4 rounded-lg btn-glow font-semibold text-lg">
+                            Kostenlose Demo anfragen
+                        </button>
+                        <button onclick="scrollToAPI()" class="border border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white px-8 py-4 rounded-lg transition-all duration-300 font-semibold text-lg">
+                            API-Dokumentation
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Visual Content -->
+                <div class="slide-in-right">
+                    <div class="glass-card rounded-2xl p-6">
+                        <h3 class="text-xl font-semibold mb-6 text-center">Live API-Response Beispiel</h3>
+                        
+                        <!-- API Response Mockup -->
+                        <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm custom-scrollbar overflow-x-auto">
+                            <div class="text-green-400"># GET /api/v1/data/demographics</div>
+                            <div class="text-gray-500 mt-2">{</div>
+                            <div class="ml-4">
+                                <div class="text-yellow-300">"status"</div><span class="text-gray-400">:</span> <span class="text-green-300">"success"</span><span class="text-gray-400">,</span>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-yellow-300">"total_records"</div><span class="text-gray-400">:</span> <span class="text-blue-300">2847</span><span class="text-gray-400">,</span>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-yellow-300">"data"</div><span class="text-gray-400">: [</span>
+                            </div>
+                            <div class="ml-8">
+                                <div class="text-gray-400">{</div>
+                                <div class="ml-4 text-yellow-300">"age_group"</div><span class="text-gray-400">:</span> <span class="text-green-300">"25-34"</span><span class="text-gray-400">,</span>
+                            </div>
+                            <div class="ml-8">
+                                <div class="ml-4 text-yellow-300">"location"</div><span class="text-gray-400">:</span> <span class="text-green-300">"DE-BE"</span><span class="text-gray-400">,</span>
+                            </div>
+                            <div class="ml-8">
+                                <div class="ml-4 text-yellow-300">"interests"</div><span class="text-gray-400">:</span> <span class="text-green-300">["tech", "sustainability"]</span>
+                            </div>
+                            <div class="ml-8 text-gray-400">}</div>
+                            <div class="ml-4 text-gray-400">]</div>
+                            <div class="text-gray-500">}</div>
+                        </div>
+                        
+                        <!-- Stats -->
+                        <div class="grid grid-cols-3 gap-4 mt-6">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-orange-400">99.9%</p>
+                                <p class="text-xs text-gray-400">API Uptime</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-green-400">15ms</p>
+                                <p class="text-xs text-gray-400">Avg. Response</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-blue-400">24/7</p>
+                                <p class="text-xs text-gray-400">Support</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Social Proof Section -->
+    <section class="py-16 px-4 bg-gradient-to-r from-gray-900 to-gray-800">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-gray-400 mb-8">Vertraut von innovativen Unternehmen</p>
+            
+            <!-- Company Logos Mockup -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 opacity-60">
+                <div class="glass-card rounded-lg p-4 flex items-center justify-center h-16">
+                    <span class="font-bold text-gray-400">TechCorp</span>
+                </div>
+                <div class="glass-card rounded-lg p-4 flex items-center justify-center h-16">
+                    <span class="font-bold text-gray-400">StartupXYZ</span>
+                </div>
+                <div class="glass-card rounded-lg p-4 flex items-center justify-center h-16">
+                    <span class="font-bold text-gray-400">RetailGiant</span>
+                </div>
+                <div class="glass-card rounded-lg p-4 flex items-center justify-center h-16">
+                    <span class="font-bold text-gray-400">FinanceAI</span>
+                </div>
+                <div class="glass-card rounded-lg p-4 flex items-center justify-center h-16">
+                    <span class="font-bold text-gray-400">HealthTech</span>
+                </div>
+                <div class="glass-card rounded-lg p-4 flex items-center justify-center h-16">
+                    <span class="font-bold text-gray-400">EduPlatform</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Solutions Section -->
+    <section id="solutions" class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-6">
+                    Branchenspezifische <span class="gradient-text">Lösungen</span>
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    Unsere Plattform liefert maßgeschneiderte Dateneinblicke für verschiedene Industrien und Anwendungsfälle.
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-3 gap-8">
+                
+                <!-- E-Commerce & Retail -->
+                <div class="glass-card rounded-xl p-8 hover:scale-105 transition-transform duration-300">
+                    <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">E-Commerce & Retail</h3>
+                    <p class="text-gray-400 mb-6">Verstehen Sie Kaufverhalten, Produktpräferenzen und Shopping-Trends in Echtzeit.</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center text-sm text-gray-300">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full mr-3"></span>
+                            Shopping-Verhalten und Präferenzen
+                        </div>
+                        <div class="flex items-center text-sm text-gray-300">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full mr-3"></span>
+                            Preissensitivität und Kaufentscheidungen
+                        </div>
+                        <div class="flex items-center text-sm text-gray-300">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full mr-3"></span>
+                            Produktfeedback und Reviews
+                        </div>
+                    </div>
+                    
+                    <button onclick="scrollToContact()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                        Retail-Demo ansehen
+                    </button>
+                </div>
+                
+                <!-- Technology & SaaS -->
+                <div class="enterprise-card rounded-xl p-8 hover:scale-105 transition-transform duration-300">
+                    <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Technology & SaaS</h3>
+                    <p class="text-gray-400 mb-6">Optimieren Sie Produktentwicklung und User Experience durch echte Nutzerdaten.</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center text-sm text-gray-300">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-3"></span>
+                            Feature-Adoption und Nutzungsverhalten
+                        </div>
+                        <div class="flex items-center text-sm text-gray-300">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-3"></span>
+                            Tech-Präferenzen und Tool-Stack
+                        </div>
+                        <div class="flex items-center text-sm text-gray-300">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-3"></span>
+                            Beta-Testing und Feedback
+                        </div>
+                    </div>
+                    
+                    <button onclick="scrollToContact()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                        Tech-Demo ansehen
+                    </button>
+                </div>
+                
+                <!-- Finance & Insurance -->
+                <div class="glass-card rounded-xl p-8 hover:scale-105 transition-transform duration-300">
+                    <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Finance & Insurance</h3>
+                    <p class="text-gray-400 mb-6">Verstehen Sie Finanzverhalten und Risikoprofile für bessere Produktgestaltung.</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center text-sm text-gray-300">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                            Spar- und Investitionsverhalten
+                        </div>
+                        <div class="flex items-center text-sm text-gray-300">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                            Finanzprodukt-Präferenzen
+                        </div>
+                        <div class="flex items-center text-sm text-gray-300">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                            Risikobewertung und Versicherungsbedürfnisse
+                        </div>
+                    </div>
+                    
+                    <button onclick="scrollToContact()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                        Finance-Demo ansehen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Comparison Section -->
+    <section class="py-20 px-4 bg-gradient-to-r from-gray-900 to-gray-800">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-6">
+                    Warum <span class="gradient-text">DataFair</span>?
+                </h2>
+                <p class="text-xl text-gray-400">Traditionelle Marktforschung vs. DataFair</p>
+            </div>
+            
+            <div class="glass-card rounded-2xl p-8 overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="pb-4 text-gray-400 font-medium">Aspekt</th>
+                            <th class="pb-4 text-red-400 font-medium text-center">Traditionelle Marktforschung</th>
+                            <th class="pb-4 text-orange-400 font-medium text-center">DataFair</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b border-gray-800">
+                            <td class="py-4 font-medium text-white">Kosten</td>
+                            <td class="py-4 text-center text-red-300">€15,000 - €50,000+ pro Studie</td>
+                            <td class="py-4 text-center text-green-300">€0.10 - €2.00 pro Datenpunkt</td>
+                        </tr>
+                        <tr class="border-b border-gray-800">
+                            <td class="py-4 font-medium text-white">Zeitaufwand</td>
+                            <td class="py-4 text-center text-red-300">4-12 Wochen</td>
+                            <td class="py-4 text-center text-green-300">Real-time API-Zugang</td>
+                        </tr>
+                        <tr class="border-b border-gray-800">
+                            <td class="py-4 font-medium text-white">Datenqualität</td>
+                            <td class="py-4 text-center text-yellow-300">Stichproben-basiert</td>
+                            <td class="py-4 text-center text-green-300">Freiwillige, verifizierte Nutzer</td>
+                        </tr>
+                        <tr class="border-b border-gray-800">
+                            <td class="py-4 font-medium text-white">Transparenz</td>
+                            <td class="py-4 text-center text-red-300">Intransparente Methodik</td>
+                            <td class="py-4 text-center text-green-300">100% nachvollziehbar</td>
+                        </tr>
+                        <tr class="border-b border-gray-800">
+                            <td class="py-4 font-medium text-white">Ethik</td>
+                            <td class="py-4 text-center text-yellow-300">Fragwürdige Datenbeschaffung</td>
+                            <td class="py-4 text-center text-green-300">Fair entlohnte Teilnehmer</td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 font-medium text-white">Skalierbarkeit</td>
+                            <td class="py-4 text-center text-red-300">Begrenzt & manuell</td>
+                            <td class="py-4 text-center text-green-300">Unbegrenzt & automatisiert</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-6">
+                    Transparente <span class="gradient-text">Preisgestaltung</span>
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    Keine versteckten Kosten. Skalieren Sie mit Ihrem Bedarf. 30 Tage kostenlos testen.
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                
+                <!-- Starter Plan -->
+                <div class="pricing-card rounded-xl p-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-xl font-semibold mb-2">Starter</h3>
+                        <p class="text-gray-400 mb-4">Perfekt für kleine Teams und Startups</p>
+                        <div class="text-4xl font-bold text-white mb-2">€299</div>
+                        <p class="text-gray-400">pro Monat</p>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Bis zu 10,000 API-Calls/Monat</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>5 Datentypen verfügbar</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Standard API-Dokumentation</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>E-Mail Support</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>30 Tage kostenlos testen</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="scrollToContact()" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-colors">
+                        Kostenlos starten
+                    </button>
+                </div>
+                
+                <!-- Professional Plan (Featured) -->
+                <div class="pricing-card featured rounded-xl p-8 relative">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                        Am beliebtesten
+                    </div>
+                    
+                    <div class="text-center mb-8">
+                        <h3 class="text-xl font-semibold mb-2">Professional</h3>
+                        <p class="text-gray-400 mb-4">Ideal für wachsende Unternehmen</p>
+                        <div class="text-4xl font-bold text-white mb-2">€799</div>
+                        <p class="text-gray-400">pro Monat</p>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Bis zu 100,000 API-Calls/Monat</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Alle Datentypen verfügbar</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Premium API-Features</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Priority Support (24h)</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Custom Integrationen</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-orange-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Analytics Dashboard</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="scrollToContact()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-lg font-semibold btn-glow">
+                        Professional wählen
+                    </button>
+                </div>
+                
+                <!-- Enterprise Plan -->
+                <div class="pricing-card rounded-xl p-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-xl font-semibold mb-2">Enterprise</h3>
+                        <p class="text-gray-400 mb-4">Für große Organisationen</p>
+                        <div class="text-4xl font-bold text-white mb-2">Custom</div>
+                        <p class="text-gray-400">individuell</p>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Unbegrenzte API-Calls</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>White-Label Lösungen</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Dedicated Account Manager</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>SLA Garantien</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>On-Premise Deployment</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="scrollToContact()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                        Kontakt aufnehmen
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Pricing Footer -->
+            <div class="text-center mt-12">
+                <p class="text-gray-400 mb-4">Alle Pläne beinhalten: SSL-Verschlüsselung, DSGVO-Compliance, 99.9% Uptime SLA</p>
+                <div class="flex justify-center space-x-8 text-sm text-gray-500">
+                    <span>✓ Keine Setup-Gebühren</span>
+                    <span>✓ Monatlich kündbar</span>
+                    <span>✓ 30 Tage Geld-zurück-Garantie</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- API Section -->
+    <section id="api" class="py-20 px-4 bg-gradient-to-r from-gray-900 to-gray-800">
+        <div class="max-w-7xl mx-auto">
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                
+                <!-- API Documentation Preview -->
+                <div>
+                    <h2 class="text-4xl font-bold mb-6">
+                        Developer-freundliche <span class="gradient-text">API</span>
+                    </h2>
+                    <p class="text-xl text-gray-400 mb-8">
+                        Integrieren Sie DataFair in wenigen Minuten in Ihre bestehenden Systeme. 
+                        RESTful API, SDKs und umfassende Dokumentation.
+                    </p>
+                    
+                    <!-- API Features -->
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-green-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">RESTful API mit JSON-Response</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">SDKs für Python, JavaScript, PHP</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-purple-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">Webhook-Support für Real-time Updates</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-orange-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <span class="text-gray-300">Rate Limiting & API-Key Management</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="scrollToContact()" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg btn-glow font-semibold">
+                            API-Dokumentation
+                        </button>
+                        <button onclick="scrollToContact()" class="border border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-400 px-6 py-3 rounded-lg transition-all duration-300 font-semibold">
+                            SDK herunterladen
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Code Example -->
+                <div class="glass-card rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold">Code-Beispiel</h3>
+                        <div class="flex space-x-2">
+                            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm custom-scrollbar overflow-x-auto">
+                        <div class="text-gray-500"># Python SDK Beispiel</div>
+                        <div class="text-blue-300 mt-2">import</div> <span class="text-white">datafair</span>
+                        <div class="mt-2"></div>
+                        <div class="text-gray-500"># API Client initialisieren</div>
+                        <div class="text-white">client = datafair.Client(</div>
+                        <div class="ml-4 text-yellow-300">api_key=</div><span class="text-green-300">"your_api_key"</span>
+                        <div class="text-white">)</div>
+                        <div class="mt-2"></div>
+                        <div class="text-gray-500"># Demografische Daten abrufen</div>
+                        <div class="text-white">data = client.demographics.get(</div>
+                        <div class="ml-4 text-yellow-300">age_range=</div><span class="text-green-300">"25-34"</span><span class="text-gray-400">,</span>
+                        <div class="ml-4 text-yellow-300">location=</div><span class="text-green-300">"DE"</span><span class="text-gray-400">,</span>
+                        <div class="ml-4 text-yellow-300">limit=</div><span class="text-blue-300">100</span>
+                        <div class="text-white">)</div>
+                        <div class="mt-2"></div>
+                        <div class="text-gray-500"># Ergebnisse verarbeiten</div>
+                        <div class="text-blue-300">for</div> <span class="text-white">user_data</span> <span class="text-blue-300">in</span> <span class="text-white">data:</span>
+                        <div class="ml-4 text-blue-300">print</div><span class="text-white">(user_data.interests)</span>
+                    </div>
+                    
+                    <div class="mt-4 text-xs text-gray-400">
+                        Vollständige Dokumentation mit interaktiven Beispielen verfügbar
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Testimonials Section -->
+    <section class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-6">
+                    Was unsere <span class="gradient-text">Kunden</span> sagen
+                </h2>
+            </div>
+            
+            <div class="grid lg:grid-cols-3 gap-8">
+                
+                <!-- Testimonial 1 -->
+                <div class="glass-card rounded-xl p-8 pulse-soft">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-white font-semibold">MS</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Maria Schmidt</h4>
+                            <p class="text-gray-400 text-sm">Head of Product, TechStartup GmbH</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-gray-300 mb-4">
+                        "DataFair hat unsere Produktentscheidungen revolutioniert. Wir bekommen echte, ethisch beschaffte Nutzerdaten in Echtzeit. Das hat unsere Time-to-Market um 60% reduziert."
+                    </p>
+                    
+                    <div class="flex text-orange-400">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- Testimonial 2 -->
+                <div class="glass-card rounded-xl p-8 pulse-soft" style="animation-delay: 1s;">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-white font-semibold">DK</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Dr. Klaus Weber</h4>
+                            <p class="text-gray-400 text-sm">CTO, FinanceAI Solutions</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-gray-300 mb-4">
+                        "Die API-Integration war beeindruckend einfach. In 2 Stunden hatten wir Live-Daten in unserer Anwendung. Die Datenqualität ist außergewöhnlich hoch."
+                    </p>
+                    
+                    <div class="flex text-orange-400">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- Testimonial 3 -->
+                <div class="glass-card rounded-xl p-8 pulse-soft" style="animation-delay: 2s;">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-white font-semibold">AL</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Anna Lindberg</h4>
+                            <p class="text-gray-400 text-sm">VP Marketing, RetailGiant</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-gray-300 mb-4">
+                        "Endlich eine ethische Alternative zu fragwürdigen Datensammlern. Unsere Kunden schätzen die Transparenz und wir erhalten bessere Insights als je zuvor."
+                    </p>
+                    
+                    <div class="flex text-orange-400">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section id="contact" class="py-20 px-4 bg-gradient-to-r from-orange-500 to-amber-500">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl font-bold text-white mb-6">
+                Bereit für ethische Marktforschung?
+            </h2>
+            <p class="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
+                Starten Sie noch heute mit DataFair und revolutionieren Sie Ihre Datenanalytik. 
+                30 Tage kostenlos, keine Kreditkarte erforderlich.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="alert('Demo-Anfrage gesendet! Wir melden uns innerhalb von 24 Stunden bei Ihnen.')" class="bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
+                    Kostenlose Demo buchen
+                </button>
+                <button onclick="alert('30-Tage-Test aktiviert! Prüfen Sie Ihre E-Mail für die Zugangsdaten.')" class="border-2 border-white text-white hover:bg-white hover:text-orange-600 px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300">
+                    Jetzt 30 Tage testen
+                </button>
+            </div>
+            
+            <div class="mt-8 text-orange-100 text-sm">
+                ✓ Keine Setup-Gebühren ✓ Jederzeit kündbar ✓ DSGVO-konform
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="py-16 px-4 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-4 gap-8">
+                
+                <!-- Company Info -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <a href="index.html" class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
+                                <span class="text-sm font-bold text-white">DF</span>
+                            </div>
+                            <span class="text-lg font-bold text-white">DataFair</span>
+                        </a>
+                    </div>
+                    <p class="text-gray-400 text-sm">
+                        Ethische Marktforschung durch faire Datenbeschaffung. 
+                        Transparenz, Vertrauen und hochqualitative Insights für Ihr Unternehmen.
+                    </p>
+                    
+                    <!-- Social Links -->
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-orange-500 transition-colors">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-orange-500 transition-colors">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84"></path>
+                            </svg>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-orange-500 transition-colors">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Produkt -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Produkt</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#api" class="hover:text-orange-400 transition-colors">API-Dokumentation</a></li>
+                        <li><a href="#api" class="hover:text-orange-400 transition-colors">SDKs & Tools</a></li>
+                        <li><a href="#pricing" class="hover:text-orange-400 transition-colors">Preise</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">Status-Seite</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">Changelog</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Unternehmen -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Unternehmen</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="index.html" class="hover:text-orange-400 transition-colors">Über uns</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">Blog</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">Karriere</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">Presse</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">Partner</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Support -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Support</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#contact" class="hover:text-orange-400 transition-colors">Hilfe-Center</a></li>
+                        <li><a href="#contact" class="hover:text-orange-400 transition-colors">Kontakt</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">Community</a></li>
+                        <li><a href="#" class="hover:text-orange-400 transition-colors">Sicherheit</a></li>
+                        <li><a href="index.html#privacy" class="hover:text-orange-400 transition-colors">Datenschutz</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-sm text-gray-400">
+                    &copy; 2025 DataFair GmbH. Alle Rechte vorbehalten.
+                </p>
+                <div class="flex space-x-6 mt-4 md:mt-0 text-sm text-gray-400">
+                    <a href="#" class="hover:text-orange-400 transition-colors">Impressum</a>
+                    <a href="index.html#privacy" class="hover:text-orange-400 transition-colors">Datenschutz</a>
+                    <a href="#" class="hover:text-orange-400 transition-colors">AGB</a>
+                    <a href="#" class="hover:text-orange-400 transition-colors">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript für sanftes Scrollen -->
+    <script>
+        function scrollToContact() {
+            document.getElementById('contact').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+        
+        function scrollToAPI() {
+            document.getElementById('api').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+    </script>
+    
+</body>
+</html>

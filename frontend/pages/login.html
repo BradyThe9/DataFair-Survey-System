@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="de" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anmeldung - DataFair</title>
+    
+    <!-- Tailwind CSS von CDN laden -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="/assets/js/api.js"></script>
+
+
+
+    <!-- Alpine.js von CDN laden für Interaktivität -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Benutzerdefinierte Styles -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        }
+        
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(251, 146, 60, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.3);
+            border-color: #f97316;
+        }
+        
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Floating Label Animation */
+        .input-group {
+            position: relative;
+        }
+        
+        .floating-label {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .input-group input:focus + .floating-label,
+        .input-group input:not(:placeholder-shown) + .floating-label {
+            top: 8px;
+            font-size: 0.75rem;
+            color: #f97316;
+            transform: translateY(0);
+        }
+        
+        /* Success checkmark animation */
+        .success-checkmark {
+            animation: successPulse 0.6s ease-in-out;
+        }
+        
+        @keyframes successPulse {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white font-sans antialiased min-h-screen">
+    
+    <!-- Navigation Bar - vereinfacht für Login -->
+    <nav class="fixed top-0 w-full z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                
+                <!-- Logo - Link zurück zur Startseite -->
+                <a href="index.html" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
+                        <span class="text-xl font-bold text-white">DF</span>
+                    </div>
+                    <span class="text-xl font-bold text-white">DataFair</span>
+                </a>
+                
+                <!-- Registrierung Link für neue Nutzer -->
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-400 text-sm hidden sm:block">Noch kein Konto?</span>
+                    <a href="register.html" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-2 rounded-lg font-semibold text-sm btn-glow">
+                        Jetzt registrieren
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hauptbereich der Anmeldung -->
+    <div class="pt-16 min-h-screen flex items-center justify-center px-4">
+        <div class="max-w-md w-full">
+            
+            <!-- Alpine.js Controller für Login-Funktionalität -->
+            <div x-data="loginController()">
+                
+                <!-- Login Form Container -->
+                <div class="glass-card rounded-2xl p-8 fade-in" x-show="!showForgotPassword && !showSuccessMessage">
+                    
+                    <!-- Header -->
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-bold mb-2">Willkommen zurück!</h1>
+                        <p class="text-gray-400">Melde dich an und verwalte deine Daten</p>
+                    </div>
+                    
+                    <!-- Login Form -->
+                    <form @submit.prevent="handleLogin()" class="space-y-6">
+                        
+                        <!-- E-Mail Input mit Floating Label -->
+                        <div class="input-group">
+                            <input 
+                                type="email" 
+                                id="email" 
+                                x-model="loginForm.email"
+                                :class="{'border-red-500 shake': errors.email, 'border-green-500': loginForm.email && !errors.email && isValidEmail}"
+                                class="w-full px-4 py-4 pt-6 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-transparent input-focus"
+                                placeholder="E-Mail"
+                                required
+                                @blur="validateEmail()"
+                            >
+                            <label for="email" class="floating-label">E-Mail Adresse</label>
+                            <p x-show="errors.email" x-text="errors.email" class="text-red-400 text-sm mt-1"></p>
+                        </div>
+                        
+                        <!-- Passwort Input mit Show/Hide Toggle -->
+                        <div class="input-group">
+                            <div class="relative">
+                                <input 
+                                    :type="showPassword ? 'text' : 'password'" 
+                                    id="password" 
+                                    x-model="loginForm.password"
+                                    :class="{'border-red-500 shake': errors.password}"
+                                    class="w-full px-4 py-4 pt-6 pr-12 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-transparent input-focus"
+                                    placeholder="Passwort"
+                                    required
+                                >
+                                <label for="password" class="floating-label">Passwort</label>
+                                
+                                <!-- Passwort anzeigen/verstecken Button -->
+                                <button 
+                                    type="button" 
+                                    @click="showPassword = !showPassword"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                                >
+                                    <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    <svg x-show="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p x-show="errors.password" x-text="errors.password" class="text-red-400 text-sm mt-1"></p>
+                        </div>
+                        
+                        <!-- Zusätzliche Optionen -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input 
+                                    type="checkbox" 
+                                    id="rememberMe" 
+                                    x-model="loginForm.rememberMe"
+                                    class="w-4 h-4 text-orange-500 border-gray-600 rounded focus:ring-orange-500 focus:ring-2 bg-gray-800"
+                                >
+                                <label for="rememberMe" class="ml-2 text-sm text-gray-300">Angemeldet bleiben</label>
+                            </div>
+                            
+                            <button 
+                                type="button" 
+                                @click="showForgotPassword = true"
+                                class="text-sm text-orange-400 hover:text-orange-300 font-medium"
+                            >
+                                Passwort vergessen?
+                            </button>
+                        </div>
+                        
+                        <!-- Login Button -->
+                        <button 
+                            type="submit" 
+                            :disabled="isLoading"
+                            :class="isLoading ? 'opacity-50 cursor-not-allowed' : 'btn-glow'"
+                            class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-4 rounded-lg font-semibold text-lg transition-all duration-300"
+                        >
+                            <span x-show="!isLoading">Anmelden</span>
+                            <span x-show="isLoading" class="flex items-center justify-center space-x-2">
+                                <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>Anmeldung läuft...</span>
+                            </span>
+                        </button>
+                        
+                    </form>
+                    
+                    <!-- Registrierungslink -->
+                    <div class="mt-6 text-center">
+                        <p class="text-gray-400">
+                            Noch kein Konto? 
+                            <a href="register.html" class="text-orange-400 hover:text-orange-300 font-semibold">
+                                Jetzt kostenlos registrieren
+                            </a>
+                        </p>
+                    </div>
+                    
+                    <!-- Demo-Hinweis -->
+                    <div class="mt-6 p-4 bg-blue-500 bg-opacity-10 border border-blue-500 border-opacity-20 rounded-lg">
+                        <h4 class="font-semibold text-blue-400 mb-2">🎯 Demo-Zugang</h4>
+                        <p class="text-sm text-gray-300 mb-2">Teste die Plattform mit diesen Demo-Daten:</p>
+                        <div class="text-sm text-gray-400">
+                            <p><strong>E-Mail:</strong> demo@datafair.com</p>
+                            <p><strong>Passwort:</strong> demo123</p>
+                        </div>
+                        <button @click="fillDemoData()" class="mt-2 text-blue-400 text-sm font-semibold hover:text-blue-300">
+                            Demo-Daten ausfüllen →
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Passwort vergessen Form -->
+                <div x-show="showForgotPassword && !showSuccessMessage" x-transition class="glass-card rounded-2xl p-8">
+                    
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-bold mb-2">Passwort zurücksetzen</h1>
+                        <p class="text-gray-400">Gib deine E-Mail ein und wir senden dir einen Reset-Link</p>
+                    </div>
+                    
+                    <form @submit.prevent="handlePasswordReset()" class="space-y-6">
+                        
+                        <!-- E-Mail Input -->
+                        <div class="input-group">
+                            <input 
+                                type="email" 
+                                id="resetEmail" 
+                                x-model="resetForm.email"
+                                :class="{'border-red-500 shake': errors.resetEmail}"
+                                class="w-full px-4 py-4 pt-6 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-transparent input-focus"
+                                placeholder="E-Mail"
+                                required
+                            >
+                            <label for="resetEmail" class="floating-label">E-Mail Adresse</label>
+                            <p x-show="errors.resetEmail" x-text="errors.resetEmail" class="text-red-400 text-sm mt-1"></p>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div class="space-y-3">
+                            <button 
+                                type="submit" 
+                                :disabled="isLoading"
+                                :class="isLoading ? 'opacity-50 cursor-not-allowed' : 'btn-glow'"
+                                class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-4 rounded-lg font-semibold text-lg transition-all duration-300"
+                            >
+                                <span x-show="!isLoading">Reset-Link senden</span>
+                                <span x-show="isLoading" class="flex items-center justify-center space-x-2">
+                                    <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Wird gesendet...</span>
+                                </span>
+                            </button>
+                            
+                            <button 
+                                type="button" 
+                                @click="showForgotPassword = false; errors = {}"
+                                class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-colors"
+                            >
+                                Zurück zur Anmeldung
+                            </button>
+                        </div>
+                        
+                    </form>
+                </div>
+                
+                <!-- Erfolgs-Nachricht -->
+                <div x-show="showSuccessMessage" x-transition class="glass-card rounded-2xl p-8 text-center">
+                    
+                    <!-- Success Icon -->
+                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 success-checkmark">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    
+                    <h1 class="text-2xl font-bold mb-4" x-text="successMessage.title"></h1>
+                    <p class="text-gray-400 mb-6" x-text="successMessage.description"></p>
+                    
+                    <div class="space-y-3">
+                        <button 
+                            x-show="successMessage.showDashboardButton"
+                            @click="goToDashboard()"
+                            class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-4 rounded-lg font-semibold btn-glow"
+                        >
+                            Zum Dashboard
+                        </button>
+                        
+                        <button 
+                            @click="resetToLogin()"
+                            class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-colors"
+                        >
+                            Neue Anmeldung
+                        </button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+<script>
+    function loginController() {
+        return {
+            // Form States
+            loginForm: {
+                email: '',
+                password: '',
+                rememberMe: false
+            },
+            
+            resetForm: {
+                email: ''
+            },
+            
+            // UI States
+            showPassword: false,
+            showForgotPassword: false,
+            showSuccessMessage: false,
+            isLoading: false,
+            isValidEmail: false,
+            
+            // Error handling
+            errors: {},
+            
+            // Success message content
+            successMessage: {
+                title: '',
+                description: '',
+                showDashboardButton: false
+            },
+            
+            // Initialisierung
+            init() {
+                // Wenn bereits eingeloggt, zum Dashboard umleiten
+                redirectIfAuthenticated();
+            },
+            
+            // E-Mail Validierung
+            validateEmail() {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                this.isValidEmail = emailRegex.test(this.loginForm.email);
+                
+                if (this.loginForm.email && !this.isValidEmail) {
+                    this.errors.email = 'Bitte gib eine gültige E-Mail Adresse ein';
+                } else {
+                    delete this.errors.email;
+                }
+                
+                return this.isValidEmail;
+            },
+            
+            // Form-Validierung
+            validateLoginForm() {
+                this.errors = {};
+                
+                if (!this.loginForm.email.trim()) {
+                    this.errors.email = 'E-Mail ist erforderlich';
+                } else if (!this.validateEmail()) {
+                    this.errors.email = 'Ungültige E-Mail Adresse';
+                }
+                
+                if (!this.loginForm.password) {
+                    this.errors.password = 'Passwort ist erforderlich';
+                } else if (this.loginForm.password.length < 6) {
+                    this.errors.password = 'Passwort zu kurz';
+                }
+                
+                return Object.keys(this.errors).length === 0;
+            },
+            
+            // Login verarbeiten - JETZT MIT ECHTER API!
+            async handleLogin() {
+                if (!this.validateLoginForm()) {
+                    this.shakeErrors();
+                    return;
+                }
+                
+                this.isLoading = true;
+                this.errors = {};
+                
+                try {
+                    // API Login aufrufen
+                    const result = await DataFairAPI.login(
+                        this.loginForm.email, 
+                        this.loginForm.password
+                    );
+                    
+                    // Erfolgreiche Anmeldung
+                    this.successMessage = {
+                        title: `Willkommen zurück, ${result.user.first_name}!`,
+                        description: 'Du wirst jetzt zu deinem Dashboard weitergeleitet.',
+                        showDashboardButton: true
+                    };
+                    this.showSuccessMessage = true;
+                    
+                    // Nach 2 Sekunden zum Dashboard umleiten
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
+                    
+                } catch (error) {
+                    // Fehlerbehandlung
+                    if (error.message.includes('Ungültige Anmeldedaten')) {
+                        this.errors.password = 'E-Mail oder Passwort ist falsch';
+                    } else if (error.message.includes('deaktiviert')) {
+                        this.errors.general = 'Dein Account wurde deaktiviert. Bitte kontaktiere den Support.';
+                    } else {
+                        this.errors.general = error.message || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.';
+                    }
+                    this.shakeErrors();
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+            
+            // Passwort-Reset verarbeiten
+            async handlePasswordReset() {
+                if (!this.resetForm.email.trim()) {
+                    this.errors.resetEmail = 'E-Mail ist erforderlich';
+                    return;
+                }
+                
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(this.resetForm.email)) {
+                    this.errors.resetEmail = 'Ungültige E-Mail Adresse';
+                    return;
+                }
+                
+                this.isLoading = true;
+                
+                try {
+                    // TODO: Passwort-Reset API implementieren
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    this.successMessage = {
+                        title: 'Reset-Link gesendet!',
+                        description: `Wir haben einen Passwort-Reset-Link an ${this.resetForm.email} gesendet. Überprüfe dein Postfach.`,
+                        showDashboardButton: false
+                    };
+                    this.showSuccessMessage = true;
+                    
+                } catch (error) {
+                    this.errors.resetEmail = 'Fehler beim Senden. Bitte versuche es erneut.';
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+            
+            // Demo-Daten ausfüllen
+            fillDemoData() {
+                this.loginForm.email = 'demo@datafair.com';
+                this.loginForm.password = 'demo123';
+                this.errors = {};
+            },
+            
+            // Zum Dashboard weiterleiten
+            goToDashboard() {
+                window.location.href = 'dashboard.html';
+            },
+            
+            // Zurück zum Login
+            resetToLogin() {
+                this.showSuccessMessage = false;
+                this.showForgotPassword = false;
+                this.loginForm = { email: '', password: '', rememberMe: false };
+                this.resetForm = { email: '' };
+                this.errors = {};
+                this.isLoading = false;
+            },
+            
+            // Fehler-Animation
+            shakeErrors() {
+                Object.keys(this.errors).forEach(field => {
+                    const element = document.getElementById(field);
+                    if (element) {
+                        element.classList.add('shake');
+                        setTimeout(() => element.classList.remove('shake'), 500);
+                    }
+                });
+            }
+        }
+    }
+</script>    
+</body>
+</html>
