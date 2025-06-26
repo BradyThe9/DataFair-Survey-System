@@ -167,23 +167,33 @@ class Activity(db.Model):
             'type': self.activity_type
         }
 
-# Survey Models
+# ===== UNIFIED SURVEY SYSTEM =====
 class Survey(db.Model):
+    """Neue einheitliche Umfragen Tabelle"""
     __tablename__ = 'surveys'
     
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
+    description = db.Column(db.Text, nullable=False)
     company = db.Column(db.String(100))
-    reward = db.Column(db.Float, nullable=False)
-    estimated_time = db.Column(db.Integer)  # in minutes
-    category = db.Column(db.String(50))
-    status = db.Column(db.String(20), default='active')  # 'active', 'paused', 'completed'
+    category = db.Column(db.String(50), nullable=False)  # 'tech', 'lifestyle', 'shopping', etc.
+    base_reward = db.Column(db.Float, nullable=False)  # Grundvergütung
+    estimated_duration = db.Column(db.Integer, nullable=False)  # Minuten
+    
+    # JSON Fields für Flexibilität
+    qualification_criteria = db.Column(db.JSON)  # Qualifikationskriterien
+    questions = db.Column(db.JSON, nullable=False)  # Fragen als JSON Array
+    
+    # Survey Management
+    max_responses = db.Column(db.Integer)  # Maximale Teilnehmer
+    current_responses = db.Column(db.Integer, default=0)  # Aktuelle Antworten
+    status = db.Column(db.String(20), nullable=False, default='active')  # 'active', 'paused', 'completed'
+    
+    # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime)
     
     # Relationships
-    questions = db.relationship('SurveyQuestion', backref='survey', lazy=True, cascade='all, delete-orphan')
     responses = db.relationship('SurveyResponse', backref='survey', lazy=True)
     
     def to_dict(self):
@@ -192,22 +202,100 @@ class Survey(db.Model):
             'title': self.title,
             'description': self.description,
             'company': self.company,
-            'reward': self.reward,
-            'estimatedTime': self.estimated_time,
             'category': self.category,
+            'base_reward': self.base_reward,
+            'estimated_duration': self.estimated_duration,
+            'qualification_criteria': self.qualification_criteria,
+            'questions': self.questions,
+            'max_responses': self.max_responses,
+            'current_responses': self.current_responses,
             'status': self.status,
-            'createdAt': self.created_at.isoformat(),
-            'expiresAt': self.expires_at.isoformat() if self.expires_at else None,
-            'questionCount': len(self.questions)
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'question_count': len(self.questions) if self.questions else 0
         }
+    
+    def is_available(self):
+        """Check if survey is available for new participants"""
+        if self.status != 'active':
+            return False
+        if self.expires_at and datetime.utcnow() > self.expires_at:
+            return False
+        if self.max_responses and self.current_responses >= self.max_responses:
+            return False
+        return True
+    
+    def get_slots_remaining(self):
+        """Get remaining participant slots"""
+        if not self.max_responses:
+            return None
+        return max(0, self.max_responses - self.current_responses)
 
+class SurveyResponse(db.Model):
+    """Umfrage-Antworten - vereinfachtes JSON-basiertes System"""
+    __tablename__ = 'survey_responses'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    survey_id = db.Column(db.Integer, db.ForeignKey('surveys.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # JSON für alle Antworten
+    answers = db.Column(db.JSON, nullable=False)  # {'q1': 'answer1', 'q2': 'answer2'}
+    
+    # Status und Progress
+    qualification_passed = db.Column(db.Boolean, default=False)
+    completion_percentage = db.Column(db.Integer, default=0)  # 0-100%
+    status = db.Column(db.String(20), default='started')  # 'started', 'completed', 'abandoned'
+    
+    # Earnings
+    earnings_amount = db.Column(db.Float, default=0.00)
+    
+    # Timestamps
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    
+    # Constraint: Ein User kann nur einmal pro Umfrage teilnehmen
+    __table_args__ = (db.UniqueConstraint('survey_id', 'user_id', name='unique_user_survey'),)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'survey_id': self.survey_id,
+            'user_id': self.user_id,
+            'answers': self.answers,
+            'qualification_passed': self.qualification_passed,
+            'completion_percentage': self.completion_percentage,
+            'status': self.status,
+            'earnings_amount': self.earnings_amount,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
+        }
+    
+    def is_completed(self):
+        """Check if survey response is completed"""
+        return self.status == 'completed' and self.completed_at is not None
+    
+    def calculate_earnings(self):
+        """Calculate earnings based on completion"""
+        if not self.qualification_passed:
+            return 0.00
+        
+        if self.completion_percentage >= 100:
+            return float(self.survey.base_reward)
+        elif self.completion_percentage >= 50:  # Partial completion minimum
+            return float(self.survey.base_reward) * (self.completion_percentage / 100.0)
+        else:
+            return 0.00
+
+# ===== LEGACY SURVEY SYSTEM (für Kompatibilität - falls alte Daten existieren) =====
 class SurveyQuestion(db.Model):
+    """Legacy Survey Questions - für Abwärtskompatibilität"""
     __tablename__ = 'survey_questions'
     
     id = db.Column(db.Integer, primary_key=True)
     survey_id = db.Column(db.Integer, db.ForeignKey('surveys.id'), nullable=False)
     question_text = db.Column(db.Text, nullable=False)
-    question_type = db.Column(db.String(20), nullable=False)  # 'single', 'multiple', 'text', 'scale'
+    question_type = db.Column(db.String(20), nullable=False)
     order = db.Column(db.Integer, default=0)
     required = db.Column(db.Boolean, default=True)
     
@@ -226,6 +314,7 @@ class SurveyQuestion(db.Model):
         }
 
 class SurveyQuestionOption(db.Model):
+    """Legacy Survey Question Options"""
     __tablename__ = 'survey_question_options'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -240,36 +329,15 @@ class SurveyQuestionOption(db.Model):
             'order': self.order
         }
 
-class SurveyResponse(db.Model):
-    __tablename__ = 'survey_responses'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    survey_id = db.Column(db.Integer, db.ForeignKey('surveys.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
-    completed_at = db.Column(db.DateTime)
-    status = db.Column(db.String(20), default='started')  # 'started', 'completed', 'abandoned'
-    
-    # Relationships
-    answers = db.relationship('SurveyAnswer', backref='response', lazy=True, cascade='all, delete-orphan')
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'surveyId': self.survey_id,
-            'startedAt': self.started_at.isoformat(),
-            'completedAt': self.completed_at.isoformat() if self.completed_at else None,
-            'status': self.status
-        }
-
 class SurveyAnswer(db.Model):
+    """Legacy Survey Answers"""
     __tablename__ = 'survey_answers'
     
     id = db.Column(db.Integer, primary_key=True)
     response_id = db.Column(db.Integer, db.ForeignKey('survey_responses.id'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('survey_questions.id'), nullable=False)
-    answer_text = db.Column(db.Text)  # Für Textantworten
-    option_id = db.Column(db.Integer, db.ForeignKey('survey_question_options.id'))  # Für Multiple Choice
+    answer_text = db.Column(db.Text)
+    option_id = db.Column(db.Integer, db.ForeignKey('survey_question_options.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
@@ -280,3 +348,33 @@ class SurveyAnswer(db.Model):
             'optionId': self.option_id,
             'createdAt': self.created_at.isoformat()
         }
+
+# ===== SURVEY SYSTEM CONSTANTS =====
+SURVEY_CATEGORIES = {
+    'tech': 'Technologie',
+    'lifestyle': 'Lifestyle',
+    'shopping': 'Shopping',
+    'health': 'Gesundheit',
+    'travel': 'Reisen',
+    'finance': 'Finanzen',
+    'education': 'Bildung',
+    'entertainment': 'Unterhaltung'
+}
+
+SURVEY_STATUS = {
+    'active': 'Aktiv',
+    'paused': 'Pausiert',
+    'completed': 'Abgeschlossen',
+    'archived': 'Archiviert'
+}
+
+QUESTION_TYPES = {
+    'single_choice': 'Einzelauswahl',
+    'multiple_choice': 'Mehrfachauswahl',
+    'scale': 'Bewertungsskala',
+    'text': 'Textantwort',
+    'number': 'Zahleneingabe',
+    'email': 'E-Mail',
+    'date': 'Datum',
+    'boolean': 'Ja/Nein'
+}

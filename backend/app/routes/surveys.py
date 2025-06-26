@@ -1,23 +1,28 @@
 # backend/app/routes/surveys.py
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime
-from sqlalchemy.exc import IntegrityError
+from flask_login import login_required, current_user
+from datetime import datetime, timedelta
 from sqlalchemy import and_, or_
+from app.models import Survey, SurveyResponse, SURVEY_CATEGORIES
+from app.database import db
 
-from ..models.survey import Survey, SurveyResponse, QualificationResponse, SURVEY_CATEGORIES
-from ..utils.survey_engine import SurveyEngine
-from .. import db
-
-# Create Blueprint
 surveys_bp = Blueprint('surveys', __name__, url_prefix='/api/surveys')
 
+@surveys_bp.route('/test', methods=['GET'])
+def test_surveys():
+    """Test endpoint"""
+    return jsonify({
+        'success': True,
+        'message': 'Survey system is working!',
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
 @surveys_bp.route('/available', methods=['GET'])
-@jwt_required()
+@login_required
 def get_available_surveys():
     """Get all available surveys for the current user"""
     try:
-        user_id = get_jwt_identity()
+        user_id = current_user.id
         
         # Get all active surveys that user hasn't participated in yet
         available_surveys = db.session.query(Survey).filter(
@@ -32,37 +37,36 @@ def get_available_surveys():
             )
         ).all()
         
-        # Convert to dict and add user-specific info
+        # Convert to dict
         result = []
         for survey in available_surveys:
             survey_data = survey.to_dict()
             survey_data['category_display'] = SURVEY_CATEGORIES.get(survey.category, survey.category)
+            survey_data['slots_remaining'] = survey.get_slots_remaining()
             result.append(survey_data)
         
         return jsonify({
             'success': True,
             'surveys': result,
-            'total_potential_earnings': sum(float(s['base_reward']) for s in result)
+            'total_potential_earnings': sum(s['base_reward'] for s in result),
+            'count': len(result)
         }), 200
         
     except Exception as e:
         current_app.logger.error(f"Error fetching available surveys: {str(e)}")
-        return jsonify({'success': False, 'message': 'Fehler beim Laden der Umfragen'}), 500
-
+        return jsonify({'success': False, 'message': f'Fehler beim Laden der Umfragen: {str(e)}'}), 500
 
 @surveys_bp.route('/<int:survey_id>', methods=['GET'])
-@jwt_required()
+@login_required
 def get_survey_details(survey_id):
     """Get detailed information about a specific survey"""
     try:
-        user_id = get_jwt_identity()
-        
         survey = Survey.query.get_or_404(survey_id)
         
         # Check if user already participated
         existing_response = SurveyResponse.query.filter_by(
             survey_id=survey_id, 
-            user_id=user_id
+            user_id=current_user.id
         ).first()
         
         if existing_response:
@@ -71,7 +75,6 @@ def get_survey_details(survey_id):
                 'message': 'Sie haben bereits an dieser Umfrage teilgenommen'
             }), 400
         
-        # Check if survey is available
         if not survey.is_available():
             return jsonify({
                 'success': False,
@@ -90,63 +93,19 @@ def get_survey_details(survey_id):
         current_app.logger.error(f"Error fetching survey details: {str(e)}")
         return jsonify({'success': False, 'message': 'Fehler beim Laden der Umfrage'}), 500
 
-
-@surveys_bp.route('/<int:survey_id>/qualify', methods=['POST'])
-@jwt_required()
-def check_qualification(survey_id):
-    """Check if user qualifies for a survey"""
-    try:
-        user_id = get_jwt_identity()
-        data = request.get_json()
-        
-        if not data or 'answers' not in data:
-            return jsonify({'success': False, 'message': 'Antworten sind erforderlich'}), 400
-        
-        survey = Survey.query.get_or_404(survey_id)
-        
-        # Use survey engine to check qualification
-        engine = SurveyEngine()
-        qualification_result = engine.check_qualification(
-            survey.qualification_criteria,
-            data['answers'],
-            user_id
-        )
-        
-        # Save qualification response
-        qual_response = QualificationResponse(
-            survey_id=survey_id,
-            user_id=user_id,
-            answers=data['answers'],
-            qualified=qualification_result['qualified'],
-            reason=qualification_result['reason']
-        )
-        
-        db.session.add(qual_response)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'qualified': qualification_result['qualified'],
-            'reason': qualification_result['reason']
-        }), 200
-        
-    except Exception as e:
-        current_app.logger.error(f"Error checking qualification: {str(e)}")
-        return jsonify({'success': False, 'message': 'Fehler bei der Qualifikationsprüfung'}), 500
-
-
 @surveys_bp.route('/stats', methods=['GET'])
-@jwt_required()
+@login_required  
 def get_user_survey_stats():
     """Get user's survey statistics"""
     try:
-        user_id = get_jwt_identity()
+        user_id = current_user.id
         
         # Calculate basic stats
         total_surveys = SurveyResponse.query.filter_by(user_id=user_id).count()
         completed_surveys = SurveyResponse.query.filter_by(
-            user_id=user_id
-        ).filter(SurveyResponse.completion_percentage >= 100).count()
+            user_id=user_id,
+            status='completed'
+        ).count()
         
         total_earnings = db.session.query(db.func.sum(SurveyResponse.earnings_amount))\
             .filter_by(user_id=user_id).scalar() or 0
