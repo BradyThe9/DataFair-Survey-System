@@ -1,322 +1,478 @@
-// DataFair API Client
+/**
+ * DataFair API Client
+ * JavaScript SDK für die Kommunikation mit dem DataFair Backend
+ * ERWEITERT MIT DASHBOARD FUNKTIONEN
+ */
+
 class DataFairAPI {
-    static baseURL = 'http://localhost:5000/api';
+    constructor() {
+        this.baseURL = window.location.origin; // Verwendet die aktuelle Domain
+        this.headers = {
+            'Content-Type': 'application/json',
+        };
+    }
     
-    // Helper method for making requests
-    static async request(url, options = {}) {
+    /**
+     * Generische API-Anfrage Methode
+     */
+    async request(endpoint, options = {}) {
+        const url = `${this.baseURL}${endpoint}`;
+        
         const config = {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include', // Include cookies for session
+            headers: this.headers,
+            credentials: 'include', // Wichtig für Session-Cookies
             ...options
         };
         
         try {
-            const response = await fetch(`${this.baseURL}${url}`, config);
-            const data = await response.json();
+            console.log(`🔄 API Request: ${config.method || 'GET'} ${endpoint}`);
+            
+            const response = await fetch(url, config);
+            
+            console.log(`📡 API Response: ${response.status} ${response.statusText}`);
+            
+            // Handle different response types
+            const contentType = response.headers.get('content-type');
+            let data;
+            
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                data = await response.text();
+            }
             
             if (!response.ok) {
-                throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                // Handle different error types
+                let errorMessage = 'API request failed';
+                
+                if (response.status === 401) {
+                    errorMessage = 'Unauthorized - please login';
+                    // Optional: redirect to login
+                    // window.location.href = '/login.html';
+                } else if (response.status === 403) {
+                    errorMessage = 'Forbidden - insufficient permissions';
+                } else if (response.status === 404) {
+                    errorMessage = 'Not found';
+                } else if (response.status === 500) {
+                    errorMessage = 'Server error';
+                } else if (data && typeof data === 'object' && data.error) {
+                    errorMessage = data.error;
+                } else if (data && typeof data === 'string') {
+                    errorMessage = data;
+                }
+                
+                throw new Error(errorMessage);
             }
             
             return data;
         } catch (error) {
-            console.error('API Request failed:', error);
+            console.error('❌ API Error:', error);
             throw error;
         }
     }
     
-    // Authentication APIs
-    static async register(userData) {
-        return await this.request('/register', {
-            method: 'POST',
-            body: JSON.stringify(userData)
-        });
-    }
-    
-    static async login(email, password) {
-        return await this.request('/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password })
-        });
-    }
-    
-    static async logout() {
-        return await this.request('/logout', {
-            method: 'POST'
-        });
-    }
-    
-    // ===== NEW: User Profile APIs =====
-    
     /**
-     * Get current user's profile
-     * @returns {Promise<Object>} User profile data
+     * GET request
      */
-    static async getProfile() {
-        const response = await this.request('/profile');
-        return response.user;
+    async get(endpoint) {
+        return this.request(endpoint, { method: 'GET' });
     }
     
     /**
-     * Update current user's profile
-     * @param {Object} profileData - Profile data to update
-     * @returns {Promise<Object>} Updated user profile
+     * POST request
      */
-    static async updateProfile(profileData) {
-        const response = await this.request('/profile', {
+    async post(endpoint, data) {
+        return this.request(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+    
+    /**
+     * PUT request
+     */
+    async put(endpoint, data) {
+        return this.request(endpoint, {
             method: 'PUT',
-            body: JSON.stringify(profileData)
-        });
-        return response.user;
-    }
-    
-    /**
-     * Change user's password
-     * @param {string} currentPassword - Current password
-     * @param {string} newPassword - New password
-     * @returns {Promise<Object>} Success response
-     */
-    static async changePassword(currentPassword, newPassword) {
-        return await this.request('/profile/password', {
-            method: 'PUT',
-            body: JSON.stringify({
-                currentPassword,
-                newPassword
-            })
+            body: JSON.stringify(data)
         });
     }
     
     /**
-     * Delete user account
-     * @param {string} password - Password for confirmation
-     * @returns {Promise<Object>} Success response
+     * DELETE request
      */
-    static async deleteAccount(password) {
-        return await this.request('/profile/delete', {
-            method: 'DELETE',
-            body: JSON.stringify({ password })
+    async delete(endpoint) {
+        return this.request(endpoint, { method: 'DELETE' });
+    }
+    
+    // ===== AUTHENTICATION METHODS =====
+    
+    /**
+     * User Login
+     */
+    async login(email, password) {
+        const data = await this.post('/auth/login', { email, password });
+        console.log('✅ Login successful:', data);
+        return data;
+    }
+    
+    /**
+     * User Logout
+     */
+    async logout() {
+        const data = await this.post('/auth/logout', {});
+        console.log('✅ Logout successful');
+        return data;
+    }
+    
+    /**
+     * User Registration
+     */
+    async register(userData) {
+        const data = await this.post('/auth/register', userData);
+        console.log('✅ Registration successful:', data);
+        return data;
+    }
+    
+    /**
+     * Check Authentication Status
+     */
+    async checkAuth() {
+        try {
+            const data = await this.get('/auth/check');
+            return data;
+        } catch (error) {
+            console.log('ℹ️ Not authenticated');
+            return { authenticated: false };
+        }
+    }
+    
+    // ===== USER PROFILE METHODS =====
+    
+    /**
+     * Get User Profile
+     */
+    async getProfile() {
+        const data = await this.get('/auth/profile');
+        return data.user || data;
+    }
+    
+    /**
+     * Update User Profile
+     */
+    async updateProfile(profileData) {
+        const data = await this.put('/auth/profile', profileData);
+        return data;
+    }
+    
+    // ===== DASHBOARD METHODS (NEU!) =====
+    
+    /**
+     * Get complete dashboard overview in one call
+     * @returns {Promise<Object>} Complete dashboard data
+     */
+    async getDashboardOverview() {
+        const response = await this.get('/api/dashboard/overview');
+        return response.dashboard;
+    }
+    
+    /**
+     * Handle quick actions from dashboard
+     * @param {string} action - Action type
+     * @param {Object} data - Action data
+     * @returns {Promise<Object>} Action result
+     */
+    async handleQuickAction(action, data = {}) {
+        return await this.post('/api/dashboard/quick-actions', {
+            action: action,
+            ...data
         });
     }
     
-    // ===== PLACEHOLDER: Future APIs =====
-    
-    // ===== Data Management APIs =====
-    
     /**
-     * Get all data types with user's permission status
-     * @returns {Promise<Array>} Array of data types with permission info
-     */
-    static async getDataTypes() {
-        const response = await this.request('/data-types');
-        return response.dataTypes;
-    }
-    
-    /**
-     * Get user's current data permissions
-     * @returns {Promise<Array>} Array of user's permissions
-     */
-    static async getDataPermissions() {
-        const response = await this.request('/data-permissions');
-        return response.permissions;
-    }
-    
-    /**
-     * Update or create a data permission
-     * @param {number} dataTypeId - ID of the data type
-     * @param {boolean} enabled - Whether to enable or disable
-     * @returns {Promise<Object>} Updated permission
-     */
-    static async updateDataPermission(dataTypeId, enabled) {
-        const response = await this.request('/data-permissions', {
-            method: 'POST',
-            body: JSON.stringify({ 
-                dataTypeId: dataTypeId, 
-                enabled: enabled 
-            })
-        });
-        return response.permission;
-    }
-    
-    /**
-     * Delete a data permission completely
-     * @param {number} permissionId - ID of the permission to delete
-     * @returns {Promise<Object>} Success response
-     */
-    static async deleteDataPermission(permissionId) {
-        return await this.request(`/data-permissions/${permissionId}`, {
-            method: 'DELETE'
-        });
-    }
-    
-    /**
-     * Get data usage statistics
-     * @returns {Promise<Object>} Usage statistics
-     */
-    static async getDataUsage() {
-        const response = await this.request('/data-usage');
-        return response.usage;
-    }
-    
-    // ===== Earnings APIs =====
-    
-    /**
-     * Get user's earnings overview
-     * @returns {Promise<Object>} Earnings data with monthly stats
-     */
-    static async getEarnings() {
-        const response = await this.request('/earnings');
-        return response.earnings;
-    }
-    
-    /**
-     * Generate monthly earnings for enabled data types
+     * Generate test earnings for demo
      * @returns {Promise<Object>} Generated earnings info
      */
-    static async generateMonthlyEarnings() {
-        return await this.request('/earnings/generate', {
-            method: 'POST'
+    async generateTestEarnings() {
+        return await this.handleQuickAction('generate_test_earnings');
+    }
+    
+    /**
+     * Quick toggle data type permission
+     * @param {number} dataTypeId - Data type ID
+     * @param {boolean} enabled - Enable/disable
+     * @returns {Promise<Object>} Update result
+     */
+    async quickToggleDataType(dataTypeId, enabled) {
+        return await this.handleQuickAction('toggle_data_type', {
+            dataTypeId: dataTypeId,
+            enabled: enabled
         });
     }
     
     /**
-     * Request a payout
-     * @param {number} amount - Amount to payout
-     * @param {string} method - Payout method ('paypal', 'bank', 'crypto')
-     * @returns {Promise<Object>} Payout request result
+     * Quick payout request
+     * @param {number} amount - Payout amount
+     * @param {string} method - Payout method
+     * @returns {Promise<Object>} Payout result
      */
-    static async requestPayout(amount, method) {
-        const response = await this.request('/payout', {
-            method: 'POST',
-            body: JSON.stringify({
-                amount: amount,
-                method: method
-            })
+    async quickPayoutRequest(amount, method = 'paypal') {
+        return await this.handleQuickAction('request_payout', {
+            amount: amount,
+            method: method
         });
-        return response.payout;
+    }
+    
+    // ===== DATA METHODS =====
+    
+    /**
+     * Get Available Data Types
+     */
+    async getDataTypes() {
+        const data = await this.get('/api/data-types');
+        return data.data_types || [];
     }
     
     /**
-     * Get user's payout history
-     * @returns {Promise<Array>} Array of payouts
+     * Update Data Permission
      */
-    static async getPayouts() {
-        const response = await this.request('/payouts');
-        return response.payouts;
-    }
-    
-    /**
-     * Add a bonus earning (special promotions)
-     * @param {number} amount - Bonus amount
-     * @param {string} description - Bonus description
-     * @returns {Promise<Object>} Bonus earning result
-     */
-    static async addBonusEarning(amount, description) {
-        const response = await this.request('/earnings/bonus', {
-            method: 'POST',
-            body: JSON.stringify({
-                amount: amount,
-                description: description
-            })
+    async updateDataPermission(dataTypeId, enabled) {
+        const permissions = await this.get('/api/data-permissions');
+        
+        // Update the specific permission
+        const updatedPermissions = permissions.permissions.map(p => 
+            p.data_type === dataTypeId ? { ...p, enabled } : p
+        );
+        
+        const data = await this.post('/api/data-permissions', {
+            permissions: updatedPermissions
         });
-        return response.earning;
+        return data;
     }
     
-    // Survey APIs (TODO: Implement in survey_routes.py)
-    static async getSurveys() {
-        // return await this.request('/surveys');
-        throw new Error('Not implemented yet');
-    }
-    
-    static async getSurveyDetails(surveyId) {
-        // return await this.request(`/surveys/${surveyId}`);
-        throw new Error('Not implemented yet');
-    }
-    
-    static async startSurvey(surveyId) {
-        // return await this.request(`/surveys/${surveyId}/start`, {
-        //     method: 'POST'
-        // });
-        throw new Error('Not implemented yet');
-    }
-    
-    static async submitSurvey(surveyId, responseId, answers) {
-        // return await this.request(`/surveys/${surveyId}/submit`, {
-        //     method: 'POST',
-        //     body: JSON.stringify({ responseId, answers })
-        // });
-        throw new Error('Not implemented yet');
-    }
-    
-    // ===== Activity APIs =====
+    // ===== EARNINGS METHODS =====
     
     /**
-     * Get user's activity feed
-     * @param {number} limit - Number of activities to fetch
-     * @param {number} offset - Offset for pagination
-     * @param {string} type - Filter by activity type
-     * @returns {Promise<Array>} Array of activities
+     * Get User Earnings
      */
-    static async getActivities(limit = 20, offset = 0, type = null) {
-        let url = `/activities?limit=${limit}&offset=${offset}`;
-        if (type) {
-            url += `&type=${type}`;
+    async getEarnings() {
+        const data = await this.get('/api/earnings');
+        return data;
+    }
+    
+    /**
+     * Request Payout
+     */
+    async requestPayout(amount, method) {
+        const data = await this.post('/api/payout', { amount, method });
+        return data;
+    }
+    
+    /**
+     * Get Payout History
+     */
+    async getPayouts() {
+        const data = await this.get('/api/payouts');
+        return data.payouts || [];
+    }
+    
+    // ===== SURVEY METHODS =====
+    
+    /**
+     * Get Available Surveys
+     */
+    async getSurveys() {
+        const data = await this.get('/api/surveys/available');
+        return data;
+    }
+    
+    /**
+     * Get Survey Details
+     */
+    async getSurveyDetails(surveyId) {
+        const data = await this.get(`/api/surveys/${surveyId}`);
+        return data;
+    }
+    
+    /**
+     * Start Survey
+     */
+    async startSurvey(surveyId) {
+        const data = await this.post(`/api/surveys/${surveyId}/start`, {});
+        return data;
+    }
+    
+    /**
+     * Submit Survey
+     */
+    async submitSurvey(surveyId, responses) {
+        const data = await this.post(`/api/surveys/${surveyId}/submit`, { responses });
+        return data;
+    }
+    
+    /**
+     * Get My Survey Responses
+     */
+    async getMySurveyResponses() {
+        const data = await this.get('/api/surveys/my-responses');
+        return data.responses || [];
+    }
+    
+    // ===== DEVELOPMENT / TEST METHODS =====
+    
+    /**
+     * Generate Test Monthly Earnings (for development)
+     */
+    async generateMonthlyEarnings() {
+        // This would be a custom endpoint for generating test data
+        const data = await this.post('/api/test/generate-earnings', {});
+        return data;
+    }
+    
+    /**
+     * Get Activities
+     */
+    async getActivities() {
+        // Mock data for now - replace with real endpoint later
+        return [
+            {
+                id: 1,
+                type: 'data_usage',
+                title: 'Daten wurden abgerufen',
+                description: 'Shopping-Verhalten wurde für Marktforschung verwendet',
+                timestamp: '2025-06-27T10:30:00Z',
+                earning: 2.50
+            },
+            {
+                id: 2,
+                type: 'survey_completed',
+                title: 'Umfrage abgeschlossen',
+                description: 'Technologie-Nutzung im Alltag',
+                timestamp: '2025-06-26T15:45:00Z',
+                earning: 12.00
+            }
+        ];
+    }
+}
+
+// ===== UTILITY FUNCTIONS =====
+
+/**
+ * Check if user is authenticated and redirect if not
+ */
+async function requireAuthentication() {
+    try {
+        const authStatus = await window.DataFairAPI.checkAuth();
+        if (!authStatus.authenticated) {
+            window.location.href = '/login.html';
+            return false;
         }
-        const response = await this.request(url);
-        return response.activities;
+        return true;
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        window.location.href = '/login.html';
+        return false;
     }
+}
+
+/**
+ * Redirect to dashboard if already authenticated
+ */
+async function redirectIfAuthenticated() {
+    try {
+        const authStatus = await window.DataFairAPI.checkAuth();
+        if (authStatus.authenticated) {
+            window.location.href = '/dashboard.html';
+        }
+    } catch (error) {
+        // User is not authenticated, continue normally
+        console.log('User not authenticated, staying on current page');
+    }
+}
+
+/**
+ * Format currency
+ */
+function formatCurrency(amount, currency = 'EUR') {
+    return new Intl.NumberFormat('de-DE', {
+        style: 'currency',
+        currency: currency
+    }).format(amount);
+}
+
+/**
+ * Format date
+ */
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+/**
+ * Format relative time
+ */
+function formatRelativeTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
     
-    /**
-     * Get activity statistics
-     * @returns {Promise<Object>} Activity stats
-     */
-    static async getActivityStats() {
-        const response = await this.request('/activities/stats');
-        return response.stats;
-    }
+    if (diffMinutes < 1) return 'Gerade eben';
+    if (diffMinutes < 60) return `vor ${diffMinutes} Minuten`;
+    if (diffHours < 24) return `vor ${diffHours} Stunden`;
+    if (diffDays < 7) return `vor ${diffDays} Tagen`;
+    return formatDate(dateString);
+}
+
+/**
+ * Show notification (simple version)
+ */
+function showNotification(message, type = 'info', duration = 3000) {
+    console.log(`${type.toUpperCase()}: ${message}`);
     
-    /**
-     * Create a new activity (for testing)
-     * @param {Object} activityData - Activity data
-     * @returns {Promise<Object>} Created activity
-     */
-    static async createActivity(activityData) {
-        const response = await this.request('/activities', {
-            method: 'POST',
-            body: JSON.stringify(activityData)
-        });
-        return response.activity;
-    }
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-20 right-4 z-50 p-4 rounded-lg text-white max-w-sm ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 
+        type === 'warning' ? 'bg-yellow-500' :
+        'bg-blue-500'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white opacity-70 hover:opacity-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after duration
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, duration);
 }
 
-// Helper function for authentication check
-function redirectIfAuthenticated() {
-    // Check if user is already logged in
-    DataFairAPI.getProfile()
-        .then(() => {
-            // User is logged in, redirect to dashboard
-            window.location.href = 'dashboard.html';
-        })
-        .catch(() => {
-            // User is not logged in, stay on current page
-        });
-}
+// ===== GLOBAL INITIALIZATION =====
 
-// Helper function to redirect if NOT authenticated
-function requireAuthentication() {
-    DataFairAPI.getProfile()
-        .then(() => {
-            // User is authenticated, continue
-        })
-        .catch(() => {
-            // User is not authenticated, redirect to login
-            window.location.href = 'login.html';
-        });
-}
+// Create global API instance
+window.DataFairAPI = new DataFairAPI();
 
-// Export for use in other scripts
+// Export for modules (if using ES6 modules)
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = DataFairAPI;
+    module.exports = { DataFairAPI, requireAuthentication, redirectIfAuthenticated };
 }
+
+console.log('✅ DataFair API Client loaded successfully (with Dashboard support)');

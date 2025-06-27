@@ -1,218 +1,301 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
-from flask_login import LoginManager, login_required, current_user, login_user, logout_user
-from werkzeug.security import generate_password_hash, check_password_hash
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+DataFair Survey System - Main Application
+Flask Backend mit korrigierter Flask-Login Konfiguration + Dashboard
+"""
+
 import os
-from datetime import datetime, timedelta
+import sys
+from datetime import datetime
+from flask import Flask, render_template, send_from_directory, jsonify, redirect, url_for, request
+from flask_cors import CORS
+from flask_login import LoginManager, login_required, current_user
+from werkzeug.security import generate_password_hash
 
-# Create Flask app
-app = Flask(__name__)
+# Add the current directory to the path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
-# Configuration
-app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data_fair.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Import our modules
+from app.database import db, init_db
+from app.models import User, Survey, SurveyResponse
+from config import Config
 
-# Import and initialize database
-from app.database import init_db
-init_db(app)
-
-# Initialize LoginManager
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-@login_manager.user_loader
-def load_user(user_id):
-    from app.models import User
-    return User.query.get(int(user_id))
-
-# Import blueprints - NUR die existierenden!
-from app.routes.auth_routes import auth_bp
-from app.routes.user_routes import user_bp
-from app.routes.data_routes import data_bp
-from app.routes.earning_routes import earning_bp
-from app.routes.activity_routes import activity_bp
-# payment_routes und enterprise_routes erstmal ausgelassen
-
-# Try to import survey system
-try:
-    from app.routes.surveys import surveys_bp
-    SURVEYS_ENABLED = True
-    print("✅ Survey system loaded!")
-except ImportError as e:
-    print(f"⚠️ Survey system disabled: {e}")
-    SURVEYS_ENABLED = False
-
-# Register blueprints - nur die existierenden
-app.register_blueprint(auth_bp)
-app.register_blueprint(user_bp)
-app.register_blueprint(data_bp)
-app.register_blueprint(earning_bp)
-app.register_blueprint(activity_bp)
-
-# Register survey blueprint if available
-if SURVEYS_ENABLED:
-    app.register_blueprint(surveys_bp)
-
-# CORS Configuration
-try:
-    from flask_cors import CORS
-    CORS(app, origins=['http://localhost:5000', 'http://127.0.0.1:5000'])
-except ImportError:
-    print("⚠️ Flask-CORS not available")
-
-# Basic routes for frontend
-@app.route('/')
-def index():
-    return send_from_directory('../frontend/pages', 'index.html')
-
-@app.route('/<path:filename>')
-def static_files(filename):
-    # Try pages first, then assets
-    if filename.endswith('.html'):
-        return send_from_directory('../frontend/pages', filename)
-    elif filename.startswith('assets/'):
-        return send_from_directory('../frontend', filename)
-    else:
-        return send_from_directory('../frontend/pages', filename)
-
-def create_demo_user():
-    from app.database import db
-    from app.models import User
+def create_app():
+    """Application Factory Pattern"""
+    app = Flask(__name__, 
+                static_folder='../frontend',
+                template_folder='../frontend/pages')
     
+    # Load configuration
+    app.config.from_object(Config)
+    
+    # Initialize database
+    init_db(app)
+    
+    # CORS Configuration - Korrigiert für alle Origins
+    CORS(app, 
+         origins=["http://localhost:5000", "http://127.0.0.1:5000", "http://localhost:3000"],
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+    
+    # Flask-Login Configuration - KORRIGIERT
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'  # Korrigierter Endpoint
+    login_manager.login_message = 'Bitte melde dich an, um auf diese Seite zuzugreifen.'
+    login_manager.login_message_category = 'info'
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+    
+    # Import and register blueprints
+    from app.routes.auth import auth_bp
+    from app.routes.api import api_bp
+    from app.routes.surveys import surveys_bp
+    from app.routes.dashboard_routes import dashboard_bp  # NEU!
+    
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(surveys_bp, url_prefix='/api/surveys')
+    app.register_blueprint(dashboard_bp)  # NEU! Dashboard hat bereits /api/dashboard prefix
+    
+    # Frontend Routes - Korrigierte Reihenfolge
+    @app.route('/')
+    def index():
+        """Startseite"""
+        return send_from_directory('../frontend/pages', 'index.html')
+    
+    @app.route('/index.html')
+    def index_alt():
+        """Alternative Startseite Route"""
+        return send_from_directory('../frontend/pages', 'index.html')
+    
+    @app.route('/pages/index.html')
+    def index_pages():
+        """Startseite über /pages/ Route"""
+        return send_from_directory('../frontend/pages', 'index.html')
+    
+    @app.route('/login.html')
+    def login_page():
+        """Login-Seite"""
+        return send_from_directory('../frontend/pages', 'login.html')
+    
+    @app.route('/pages/login.html')
+    def login_page_pages():
+        """Login-Seite über /pages/ Route"""
+        return send_from_directory('../frontend/pages', 'login.html')
+    
+    @app.route('/register.html')
+    def register_page():
+        """Registrierung-Seite"""
+        return send_from_directory('../frontend/pages', 'register.html')
+    
+    @app.route('/pages/register.html')
+    def register_page_pages():
+        """Registrierung-Seite über /pages/ Route"""
+        return send_from_directory('../frontend/pages', 'register.html')
+    
+    @app.route('/dashboard.html')
+    @login_required
+    def dashboard_page():
+        """Dashboard-Seite (Login erforderlich)"""
+        return send_from_directory('../frontend/pages', 'dashboard.html')
+    
+    @app.route('/pages/dashboard.html')
+    @login_required
+    def dashboard_page_pages():
+        """Dashboard-Seite über /pages/ Route (Login erforderlich)"""
+        return send_from_directory('../frontend/pages', 'dashboard.html')
+    
+    @app.route('/enterprise.html')
+    def enterprise_page():
+        """Enterprise-Seite"""
+        return send_from_directory('../frontend/pages', 'enterprise.html')
+    
+    @app.route('/pages/enterprise.html')
+    def enterprise_page_pages():
+        """Enterprise-Seite über /pages/ Route"""
+        return send_from_directory('../frontend/pages', 'enterprise.html')
+    
+    # Static Files and Assets - Erweitert
+    @app.route('/assets/<path:filename>')
+    def assets(filename):
+        """Serve static assets"""
+        return send_from_directory('../frontend/assets', filename)
+    
+    @app.route('/frontend/assets/<path:filename>')
+    def frontend_assets(filename):
+        """Alternative asset route"""
+        return send_from_directory('../frontend/assets', filename)
+        
+    @app.route('/pages/<path:filename>')
+    def pages_fallback(filename):
+        """Fallback for any /pages/ requests"""
+        try:
+            return send_from_directory('../frontend/pages', filename)
+        except:
+            return "Page not found", 404
+    
+    # Favicon
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory('../frontend/assets/images', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    
+    # Health Check
+    @app.route('/health')
+    def health_check():
+        """System Health Check"""
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.utcnow().isoformat(),
+            'version': '1.0.0',
+            'surveys_enabled': True,
+            'dashboard_enabled': True  # NEU!
+        })
+    
+    # API Documentation
+    @app.route('/api')
+    def api_docs():
+        """API Documentation"""
+        return jsonify({
+            'message': 'DataFair Survey System API',
+            'version': '1.0.0',
+            'endpoints': {
+                'auth': '/auth/',
+                'surveys': '/api/surveys/',
+                'dashboard': '/api/dashboard/',  # NEU!
+                'users': '/api/users/',
+                'health': '/health'
+            }
+        })
+    
+    # Error Handlers
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({'error': 'Not found'}), 404
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        db.session.rollback()
+        return jsonify({'error': 'Internal server error'}), 500
+    
+    return app
+
+def create_demo_data():
+    """Create demo user and sample surveys"""
     print("Checking for demo user...")
-    try:
-        demo_user = User.query.filter_by(email='demo@datafair.com').first()
-        if not demo_user:
-            demo_user = User(
-                email='demo@datafair.com',
-                first_name='Demo',
-                last_name='User',
-                password_hash=generate_password_hash('demo123'),
-                country='DE',
-                newsletter=True
-            )
-            db.session.add(demo_user)
-            db.session.commit()
-            print("✅ Demo user created!")
-            print("   Email: demo@datafair.com")
-            print("   Password: demo123")
-        else:
-            print("✅ Demo user already exists!")
-    except Exception as e:
-        print(f"❌ Demo user error: {e}")
-
-def init_sample_surveys():
-    if not SURVEYS_ENABLED:
-        print("⚠️ Survey system not available")
-        return
+    
+    # Check if demo user exists
+    demo_user = User.query.filter_by(email='demo@datafair.com').first()
+    
+    if not demo_user:
+        # Create demo user
+        demo_user = User(
+            email='demo@datafair.com',
+            password_hash=generate_password_hash('demo123'),
+            first_name='Demo',
+            last_name='User',
+            is_verified=True
+        )
+        db.session.add(demo_user)
+        print("✅ Demo user created!")
+        print("Email: demo@datafair.com")
+        print("Password: demo123")
+    else:
+        print("✅ Demo user already exists!")
+    
+    # Check for surveys
+    survey_count = Survey.query.count()
+    
+    if survey_count == 0:
+        # Create sample surveys
+        import json
         
-    try:
-        from app.database import db
-        from app.models import Survey
+        survey1_questions = [
+            {
+                "id": 1,
+                "question": "Wie oft kaufen Sie online ein?",
+                "type": "multiple_choice",
+                "options": ["Täglich", "Wöchentlich", "Monatlich", "Selten"]
+            },
+            {
+                "id": 2,
+                "question": "Was ist Ihnen beim Online-Shopping am wichtigsten?",
+                "type": "multiple_choice",
+                "options": ["Preis", "Qualität", "Lieferzeit", "Nachhaltigkeit"]
+            }
+        ]
         
-        if Survey.query.count() == 0:
-            sample_surveys = [
-                {
-                    'title': 'Online-Shopping Verhalten 2025',
-                    'description': 'Teilen Sie Ihre Online-Shopping-Erfahrungen mit uns.',
-                    'company': 'DataFair Research',
-                    'category': 'shopping',
-                    'base_reward': 2.75,
-                    'estimated_duration': 6,
-                    'questions': [
-                        {
-                            'id': 'q1',
-                            'type': 'single_choice',
-                            'text': 'Was ist Ihnen beim Online-Shopping am wichtigsten?',
-                            'options': ['Preis', 'Qualität', 'Schnelle Lieferung', 'Kundenservice'],
-                            'required': True
-                        }
-                    ],
-                    'max_responses': 500
-                },
-                {
-                    'title': 'Technologie-Trends 2025',
-                    'description': 'Ihre Meinung zu aktuellen Technologie-Trends.',
-                    'company': 'TechInsights',
-                    'category': 'tech',
-                    'base_reward': 4.00,
-                    'estimated_duration': 10,
-                    'questions': [
-                        {
-                            'id': 'q1',
-                            'type': 'single_choice',
-                            'text': 'Welche Technologie wird 2025 am wichtigsten sein?',
-                            'options': ['KI', 'VR', 'Blockchain', 'IoT'],
-                            'required': True
-                        }
-                    ],
-                    'max_responses': 300
-                }
-            ]
-            
-            for survey_data in sample_surveys:
-                survey = Survey(
-                    title=survey_data['title'],
-                    description=survey_data['description'],
-                    company=survey_data['company'],
-                    category=survey_data['category'],
-                    base_reward=survey_data['base_reward'],
-                    estimated_duration=survey_data['estimated_duration'],
-                    questions=survey_data['questions'],
-                    max_responses=survey_data['max_responses'],
-                    status='active',
-                    expires_at=datetime.utcnow() + timedelta(days=60)
-                )
-                db.session.add(survey)
-            
-            db.session.commit()
-            print(f"✅ {len(sample_surveys)} sample surveys created!")
-        else:
-            print(f"✅ {Survey.query.count()} surveys already exist")
-            
-    except Exception as e:
-        print(f"❌ Error creating sample surveys: {e}")
-        import traceback
-        traceback.print_exc()
-
-# Health check endpoint
-@app.route('/health')
-def health_check():
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.utcnow().isoformat(),
-        'surveys_enabled': SURVEYS_ENABLED,
-        'version': '1.0.0'
-    })
+        survey2_questions = [
+            {
+                "id": 1,
+                "question": "Wie viele Stunden pro Tag nutzen Sie Ihr Smartphone?",
+                "type": "multiple_choice",
+                "options": ["1-2 Stunden", "3-4 Stunden", "5-6 Stunden", "Mehr als 6 Stunden"]
+            },
+            {
+                "id": 2,
+                "question": "Welche Apps nutzen Sie am häufigsten?",
+                "type": "multiple_choice",
+                "options": ["Social Media", "Nachrichten", "Shopping", "Games"]
+            }
+        ]
+        
+        survey1 = Survey(
+            title="Konsumverhalten Studie 2025",
+            description="Eine Umfrage über moderne Konsumgewohnheiten",
+            questions=json.dumps(survey1_questions),  # Convert to JSON string
+            reward_amount=15.50,
+            max_responses=1000,
+            is_active=True
+        )
+        
+        survey2 = Survey(
+            title="Technologie-Nutzung im Alltag",
+            description="Umfrage zur Nutzung digitaler Technologien",
+            questions=json.dumps(survey2_questions),  # Convert to JSON string
+            reward_amount=12.00,
+            max_responses=500,
+            is_active=True
+        )
+        
+        db.session.add(survey1)
+        db.session.add(survey2)
+        print("✅ 2 sample surveys created!")
+    else:
+        print(f"✅ {survey_count} surveys already exist")
+    
+    db.session.commit()
 
 if __name__ == '__main__':
+    print("✅ Survey system loaded!")
+    print("✅ Dashboard system loaded!")  # NEU!
+    print("🚀 Initializing DataFair Application...")
+    print("=" * 50)
+    
+    # Create Flask app
+    app = create_app()
+    
+    # Create tables and demo data
     with app.app_context():
-        from app.database import db
-        
-        print("🚀 Initializing DataFair Application...")
-        print("=" * 50)
-        
-        # Create all database tables
         db.create_all()
         print("✅ Database tables created/verified")
-        
-        # Initialize sample data
-        create_demo_user()
-        init_sample_surveys()
-        
-        print("=" * 50)
-        print("🎉 DataFair Application Ready!")
-        print()
-        print("📍 Available at: http://127.0.0.1:5000")
-        print("👤 Demo Login: demo@datafair.com / demo123")
-        print()
-        if SURVEYS_ENABLED:
-            print("📋 Survey System: ✅ ACTIVE")
-            print("🧪 Test Endpoint: http://127.0.0.1:5000/api/surveys/test")
-            print("📋 Available Surveys: http://127.0.0.1:5000/api/surveys/available")
-        else:
-            print("📋 Survey System: ❌ DISABLED")
-        print("=" * 50)
-        
-    app.run(debug=True, port=5000, host='127.0.0.1')
+        create_demo_data()
+    
+    print("=" * 50)
+    print("🎉 DataFair Application Ready!")
+    print(f"📍 Available at: http://127.0.0.1:5000")
+    print(f"👤 Demo Login: demo@datafair.com / demo123")
+    print(f"📋 Survey System: ✅ ACTIVE")
+    print(f"📊 Dashboard System: ✅ ACTIVE")  # NEU!
+    print(f"🧪 Test Endpoint: http://127.0.0.1:5000/api/surveys/test")
+    print(f"📋 Available Surveys: http://127.0.0.1:5000/api/surveys/available")
+    print(f"📊 Dashboard API: http://127.0.0.1:5000/api/dashboard/overview")  # NEU!
+    print("=" * 50)
+    
+    # Start the application
+    app.run(host='127.0.0.1', port=5000, debug=True)
