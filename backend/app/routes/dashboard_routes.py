@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 from app.database import db
-from app.models import User
+from app.models import User, Earning
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
 
@@ -21,6 +21,9 @@ def get_dashboard_overview():
             'lastName': current_user.last_name,
             'joinDate': current_user.created_at.isoformat() if hasattr(current_user, 'created_at') else datetime.utcnow().isoformat()
         }
+        
+        # ECHTE Earnings Data aus der Datenbank
+        earnings_data = get_user_earnings_data(current_user.id)
         
         # Mock Data Types (da wir noch keine DataType Tabelle haben)
         data_types_list = [
@@ -98,35 +101,14 @@ def get_dashboard_overview():
             }
         ]
         
-        # Mock Earnings Data
-        earnings_data = {
-            'thisMonth': 0.0,
-            'total': 0.0,
-            'available': 0.0,
-            'pending': 0.0,
-            'monthlyPotential': 57.00,  # Sum of all data types
-            'monthlyData': [0, 0, 0, 0, 0, 0],
-            'chartLabels': ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun']
-        }
-        
-        # Mock Activities
-        activities_list = [
-            {
-                'id': 1,
-                'title': 'Willkommen bei DataFair!',
-                'description': 'Dein Account wurde erfolgreich erstellt. Aktiviere Datentypen um zu verdienen.',
-                'timestamp': 'Gerade eben',
-                'earning': 0.0,
-                'company': 'DataFair',
-                'type': 'welcome'
-            }
-        ]
+        # Activities mit echten Earnings
+        activities_list = get_user_activities(current_user.id)
         
         # Statistics
         stats = {
             'totalDataTypes': len(data_types_list),
             'activeDataTypes': 0,
-            'totalActivities': 1,
+            'totalActivities': len(activities_list),
             'memberSince': datetime.utcnow().strftime('%B %Y')
         }
         
@@ -146,7 +128,124 @@ def get_dashboard_overview():
         })
         
     except Exception as e:
+        print(f"Dashboard overview error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+def get_user_earnings_data(user_id):
+    """Get real earnings data from database"""
+    try:
+        # Total earnings
+        total_earnings = db.session.query(func.sum(Earning.amount)).filter_by(
+            user_id=user_id
+        ).scalar() or 0.0
+        
+        # This month earnings
+        current_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        this_month_earnings = db.session.query(func.sum(Earning.amount)).filter(
+            Earning.user_id == user_id,
+            Earning.earned_at >= current_month
+        ).scalar() or 0.0
+        
+        # Available for payout (assuming all earnings are available for now)
+        available_earnings = total_earnings
+        
+        # Get last 6 months for chart
+        monthly_data = []
+        chart_labels = []
+        
+        for i in range(6):
+            month_date = datetime.utcnow() - timedelta(days=30*i)
+            month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            if i == 0:
+                # Current month - from start of month to now
+                month_end = datetime.utcnow()
+            else:
+                # Previous months - full month
+                if month_date.month == 12:
+                    next_month = month_date.replace(year=month_date.year + 1, month=1)
+                else:
+                    next_month = month_date.replace(month=month_date.month + 1)
+                month_end = next_month
+            
+            month_earnings = db.session.query(func.sum(Earning.amount)).filter(
+                Earning.user_id == user_id,
+                Earning.earned_at >= month_start,
+                Earning.earned_at < month_end
+            ).scalar() or 0.0
+            
+            monthly_data.insert(0, float(month_earnings))
+            chart_labels.insert(0, month_date.strftime('%b'))
+        
+        return {
+            'thisMonth': float(this_month_earnings),
+            'total': float(total_earnings),
+            'available': float(available_earnings),
+            'pending': 0.0,
+            'monthlyPotential': 57.00,
+            'monthlyData': monthly_data,
+            'chartLabels': chart_labels
+        }
+        
+    except Exception as e:
+        print(f"Error getting earnings data: {str(e)}")
+        # Return default data on error
+        return {
+            'thisMonth': 0.0,
+            'total': 0.0,
+            'available': 0.0,
+            'pending': 0.0,
+            'monthlyPotential': 57.00,
+            'monthlyData': [0, 0, 0, 0, 0, 0],
+            'chartLabels': ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun']
+        }
+
+def get_user_activities(user_id):
+    """Get user activities from earnings"""
+    try:
+        # Get recent earnings as activities
+        recent_earnings = Earning.query.filter_by(user_id=user_id)\
+            .order_by(Earning.earned_at.desc())\
+            .limit(10)\
+            .all()
+        
+        activities = []
+        for earning in recent_earnings:
+            activities.append({
+                'id': earning.id,
+                'title': earning.description or 'Verdienst erhalten',
+                'description': f'Du hast €{earning.amount:.2f} für {earning.source_type} erhalten.',
+                'timestamp': earning.earned_at.strftime('%d.%m.%Y %H:%M'),
+                'earning': float(earning.amount),
+                'company': 'DataFair',
+                'type': earning.source_type
+            })
+        
+        # Add welcome message if no activities
+        if not activities:
+            activities.append({
+                'id': 0,
+                'title': 'Willkommen bei DataFair!',
+                'description': 'Dein Account wurde erfolgreich erstellt. Aktiviere Datentypen um zu verdienen.',
+                'timestamp': 'Gerade eben',
+                'earning': 0.0,
+                'company': 'DataFair',
+                'type': 'welcome'
+            })
+        
+        return activities
+        
+    except Exception as e:
+        print(f"Error getting activities: {str(e)}")
+        return [{
+            'id': 0,
+            'title': 'Willkommen bei DataFair!',
+            'description': 'Dein Account wurde erfolgreich erstellt.',
+            'timestamp': 'Gerade eben',
+            'earning': 0.0,
+            'company': 'DataFair',
+            'type': 'welcome'
+        }]
 
 @dashboard_bp.route('/quick-actions', methods=['POST'])
 @login_required  
@@ -169,18 +268,36 @@ def handle_quick_action():
         return jsonify({'error': str(e)}), 500
 
 def generate_test_earnings():
-    """Generate test earnings for demo purposes"""
+    """Generate REAL test earnings for demo purposes"""
     try:
-        # Mock test earnings generation
-        test_amount = 25.50
+        import random
+        
+        # Generate random test amount between 5 and 50 EUR
+        test_amount = round(random.uniform(5.0, 50.0), 2)
+        
+        # Create real earning entry in database
+        earning = Earning(
+            user_id=current_user.id,
+            amount=test_amount,
+            source_type='test_data',
+            description=f'Test-Verdienst generiert - Datennutzung simuliert',
+            status='earned'
+        )
+        
+        db.session.add(earning)
+        db.session.commit()
+        
+        print(f"✅ Created test earning: €{test_amount} for user {current_user.id}")
         
         return jsonify({
             'success': True,
-            'message': f'€{test_amount:.2f} Test-Verdienst generiert! (Demo-Modus)',
+            'message': f'€{test_amount:.2f} Test-Verdienst wurde deinem Guthaben hinzugefügt!',
             'amount': test_amount
         })
         
     except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error generating test earnings: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 def toggle_data_type_quick(data_type_id, enabled):
@@ -198,9 +315,26 @@ def toggle_data_type_quick(data_type_id, enabled):
         
         data_type_name = data_type_names.get(data_type_id, 'Unbekannter Datentyp')
         
+        # If enabling a data type, generate a small earning as reward
+        if enabled:
+            bonus_amount = 2.50
+            earning = Earning(
+                user_id=current_user.id,
+                amount=bonus_amount,
+                source_type='data_activation',
+                description=f'Aktivierungsbonus für {data_type_name}',
+                status='earned'
+            )
+            db.session.add(earning)
+            db.session.commit()
+            
+            message = f"'{data_type_name}' aktiviert! Du erhältst €{bonus_amount:.2f} Aktivierungsbonus."
+        else:
+            message = f"'{data_type_name}' deaktiviert"
+        
         return jsonify({
             'success': True,
-            'message': f"'{data_type_name}' {'aktiviert' if enabled else 'deaktiviert'} (Demo-Modus)",
+            'message': message,
             'dataType': {
                 'id': data_type_id,
                 'enabled': enabled,
@@ -209,6 +343,8 @@ def toggle_data_type_quick(data_type_id, enabled):
         })
         
     except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error toggling data type: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 def quick_payout_request(amount, method='paypal'):
@@ -216,7 +352,17 @@ def quick_payout_request(amount, method='paypal'):
     try:
         if not amount or float(amount) < 10:
             return jsonify({'error': 'Mindestbetrag €10.00'}), 400
+        
+        # Check if user has enough balance
+        total_earnings = db.session.query(func.sum(Earning.amount)).filter_by(
+            user_id=current_user.id
+        ).scalar() or 0.0
+        
+        if float(amount) > total_earnings:
+            return jsonify({'error': 'Unzureichendes Guthaben'}), 400
             
+        # For demo purposes, just return success
+        # In production, this would create a payout request
         return jsonify({
             'success': True,
             'message': f'Auszahlung von €{amount} per {method.upper()} beantragt (Demo-Modus)',

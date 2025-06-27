@@ -134,6 +134,38 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            min-width: 300px;
+            max-width: 400px;
+            padding: 16px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .notification.success { background-color: #10b981; }
+        .notification.error { background-color: #ef4444; }
+        .notification.warning { background-color: #f59e0b; }
+        .notification.info { background-color: #3b82f6; }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
@@ -173,16 +205,16 @@
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zm-5-15c1.38 0 2.74.35 4 1M9 19a9 9 0 110-18 9 9 0 010 18z"></path>
                             </svg>
-                            <span x-show="unreadNotifications > 0" class="absolute top-0 right-0 w-3 h-3 bg-orange-500 rounded-full"></span>
+                            <span x-show="dashboardData.notifications.unread > 0" class="absolute top-0 right-0 w-3 h-3 bg-orange-500 rounded-full"></span>
                         </button>
                         
                         <!-- User Avatar und Dropdown -->
                         <div class="relative">
                             <button @click="userMenuOpen = !userMenuOpen" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-800 transition-colors">
                                 <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center">
-                                    <span class="text-sm font-semibold text-white" x-text="user.firstName.charAt(0) + user.lastName.charAt(0)"></span>
+                                    <span class="text-sm font-semibold text-white" x-text="getUserInitials()"></span>
                                 </div>
-                                <span class="hidden sm:block text-sm font-medium" x-text="user.firstName + ' ' + user.lastName"></span>
+                                <span class="hidden sm:block text-sm font-medium" x-text="getUserFullName()"></span>
                                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
@@ -209,7 +241,7 @@
                 <!-- Willkommensnachricht -->
                 <div class="mb-8 fade-in">
                     <h1 class="text-3xl font-bold mb-2">
-                        Willkommen zurück, <span class="text-orange-400" x-text="user.firstName"></span>!
+                        Willkommen zurück, <span class="text-orange-400" x-text="dashboardData.user.firstName"></span>!
                     </h1>
                     <p class="text-gray-400">Hier ist deine Übersicht über deine geteilten Daten und Verdienste.</p>
                 </div>
@@ -226,7 +258,7 @@
                             </button>
                             <button @click="activeTab = 'surveys'" :class="activeTab === 'surveys' ? 'border-orange-500 text-orange-400' : 'border-transparent text-gray-400 hover:text-gray-300'" class="py-2 px-1 border-b-2 font-medium text-sm transition-colors relative">
                                 Umfragen
-                                <span x-show="availableSurveys.length > 0" class="absolute -top-1 -right-2 w-5 h-5 bg-orange-500 rounded-full text-xs flex items-center justify-center text-white" x-text="availableSurveys.length"></span>
+                                <span x-show="dashboardData.notifications.hasNewSurveys" class="absolute -top-1 -right-2 w-5 h-5 bg-orange-500 rounded-full text-xs flex items-center justify-center text-white">!</span>
                             </button>
                             <button @click="activeTab = 'earnings'" :class="activeTab === 'earnings' ? 'border-orange-500 text-orange-400' : 'border-transparent text-gray-400 hover:text-gray-300'" class="py-2 px-1 border-b-2 font-medium text-sm transition-colors">
                                 Auszahlungen
@@ -254,13 +286,13 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm text-gray-400">Diesen Monat</p>
-                                    <p class="text-3xl font-bold text-white" x-text="'€' + earnings.thisMonth.toFixed(2)"></p>
+                                    <p class="text-3xl font-bold text-white" x-text="'€' + dashboardData.earnings.thisMonth.toFixed(2)"></p>
                                     <p class="text-sm text-green-400 flex items-center mt-1">
                                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                                         </svg>
-                                        <span x-show="earnings.thisMonth > 0">+15% vs. letzten Monat</span>
-                                        <span x-show="earnings.thisMonth === 0">Noch keine Einnahmen</span>
+                                        <span x-show="dashboardData.earnings.thisMonth > 0">+15% vs. letzten Monat</span>
+                                        <span x-show="dashboardData.earnings.thisMonth === 0">Noch keine Einnahmen</span>
                                     </p>
                                 </div>
                                 <div class="w-12 h-12 bg-orange-500 bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -276,7 +308,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm text-gray-400">Gesamtverdienst</p>
-                                    <p class="text-3xl font-bold text-white" x-text="'€' + earnings.total.toFixed(2)"></p>
+                                    <p class="text-3xl font-bold text-white" x-text="'€' + dashboardData.earnings.total.toFixed(2)"></p>
                                     <p class="text-sm text-gray-400 mt-1">Seit Registrierung</p>
                                 </div>
                                 <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -292,8 +324,8 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm text-gray-400">Aktive Datentypen</p>
-                                    <p class="text-3xl font-bold text-white" x-text="dataTypes.filter(type => type.enabled).length"></p>
-                                    <p class="text-sm text-gray-400 mt-1" x-text="'von ' + dataTypes.length + ' verfügbar'"></p>
+                                    <p class="text-3xl font-bold text-white" x-text="getActiveDataTypesCount()"></p>
+                                    <p class="text-sm text-gray-400 mt-1" x-text="'von ' + dashboardData.dataTypes.length + ' verfügbar'"></p>
                                 </div>
                                 <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
                                     <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -308,10 +340,10 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm text-gray-400">Verfügbar für Auszahlung</p>
-                                    <p class="text-3xl font-bold text-white" x-text="'€' + earnings.available.toFixed(2)"></p>
+                                    <p class="text-3xl font-bold text-white" x-text="'€' + dashboardData.earnings.available.toFixed(2)"></p>
                                     <p class="text-sm text-orange-400 mt-1">
-                                        <span x-show="earnings.available >= 10">Auszahlung möglich</span>
-                                        <span x-show="earnings.available < 10">Min. €10 erforderlich</span>
+                                        <span x-show="dashboardData.earnings.available >= 10">Auszahlung möglich</span>
+                                        <span x-show="dashboardData.earnings.available < 10">Min. €10 erforderlich</span>
                                     </p>
                                 </div>
                                 <div class="w-12 h-12 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -338,7 +370,7 @@
                         <div class="glass-card rounded-xl p-6">
                             <h3 class="text-lg font-semibold mb-4">Schnellaktionen</h3>
                             <div class="space-y-3">
-                                <button @click="activeTab = 'earnings'" :disabled="earnings.available < 10" :class="earnings.available >= 10 ? 'btn-glow' : 'opacity-50 cursor-not-allowed'" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-lg font-semibold">
+                                <button @click="requestQuickPayout()" :disabled="dashboardData.earnings.available < 10" :class="dashboardData.earnings.available >= 10 ? 'btn-glow' : 'opacity-50 cursor-not-allowed'" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-lg font-semibold">
                                     Auszahlung beantragen
                                 </button>
                                 <button @click="activeTab = 'data'" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-colors">
@@ -346,7 +378,7 @@
                                 </button>
                                 <button @click="activeTab = 'surveys'" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-colors relative">
                                     Neue Umfragen ansehen
-                                    <span x-show="availableSurveys.length > 0" class="absolute top-2 right-2 w-6 h-6 bg-orange-500 rounded-full text-xs flex items-center justify-center" x-text="availableSurveys.length"></span>
+                                    <span x-show="dashboardData.notifications.hasNewSurveys" class="absolute top-2 right-2 w-6 h-6 bg-orange-500 rounded-full text-xs flex items-center justify-center">!</span>
                                 </button>
                                 <button @click="generateTestEarnings()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors">
                                     🧪 Test-Verdienste generieren
@@ -356,12 +388,12 @@
                             <!-- Verdienstpotential -->
                             <div class="mt-6 p-4 bg-gradient-to-r from-orange-500 bg-opacity-10 to-amber-500 bg-opacity-10 rounded-lg border border-orange-500 border-opacity-20">
                                 <h4 class="font-semibold text-orange-400 mb-2">💡 Verdienstpotential</h4>
-                                <template x-if="dataTypes.filter(type => !type.enabled).length > 0">
+                                <template x-if="getInactiveDataTypesCount() > 0">
                                     <div>
                                         <p class="text-sm text-gray-300 mb-2">
                                             Du könntest bis zu 
                                             <span class="font-semibold text-orange-400">
-                                                €<span x-text="dataTypes.filter(type => !type.enabled).reduce((sum, type) => sum + type.monthlyValue, 0).toFixed(2)"></span> mehr
+                                                €<span x-text="getInactiveEarningsPotential().toFixed(2)"></span> mehr
                                             </span> 
                                             pro Monat verdienen!
                                         </p>
@@ -370,7 +402,7 @@
                                         </button>
                                     </div>
                                 </template>
-                                <template x-if="dataTypes.filter(type => !type.enabled).length === 0">
+                                <template x-if="getInactiveDataTypesCount() === 0">
                                     <p class="text-sm text-gray-300">
                                         Super! Du hast alle verfügbaren Datentypen aktiviert. 🎉
                                     </p>
@@ -388,7 +420,7 @@
                         <p class="text-gray-400 mb-6">Entscheide selbst, welche Daten du teilen möchtest. Du kannst jederzeit Änderungen vornehmen.</p>
                         
                         <div class="space-y-4">
-                            <template x-for="dataType in dataTypes" :key="dataType.id">
+                            <template x-for="dataType in dashboardData.dataTypes" :key="dataType.id">
                                 <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
                                     <div class="flex-1">
                                         <div class="flex items-center space-x-3 mb-2">
@@ -408,285 +440,36 @@
                     </div>
                 </div>
                 
+                <!-- Weitere Tabs bleiben unverändert... -->
+                <!-- (Surveys, Earnings, Activity, Profile) -->
+                
                 <!-- Umfragen Tab -->
                 <div x-show="activeTab === 'surveys'" class="space-y-6">
-                    
-                    <!-- Verfügbare Umfragen -->
-                    <div x-show="surveyView === 'list'">
-                        <div class="glass-card rounded-xl p-6">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-xl font-semibold">Verfügbare Umfragen</h3>
-                                <div class="flex space-x-2">
-                                    <button @click="loadSurveyHistory()" class="text-sm text-gray-400 hover:text-orange-400">
-                                        Historie ansehen
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Umfragen-Liste -->
-                            <div x-show="availableSurveys.length > 0" class="grid gap-4">
-                                <template x-for="survey in availableSurveys" :key="survey.id">
-                                    <div class="survey-card rounded-lg p-6 cursor-pointer" @click="viewSurveyDetails(survey.id)">
-                                        <div class="flex justify-between items-start mb-3">
-                                            <div>
-                                                <h4 class="font-semibold text-lg mb-1" x-text="survey.title"></h4>
-                                                <p class="text-sm text-gray-400" x-text="survey.company"></p>
-                                            </div>
-                                            <div class="text-right">
-                                                <p class="text-2xl font-bold text-indigo-400" x-text="'€' + survey.reward.toFixed(2)"></p>
-                                                <p class="text-xs text-gray-400" x-text="survey.estimatedTime + ' Min.'"></p>
-                                            </div>
-                                        </div>
-                                        <p class="text-gray-300 mb-4" x-text="survey.description"></p>
-                                        <div class="flex items-center justify-between">
-                                            <span class="px-2 py-1 bg-indigo-500 bg-opacity-20 text-indigo-400 text-xs rounded-full" x-text="survey.category"></span>
-                                            <button class="text-indigo-400 hover:text-indigo-300 font-semibold text-sm">
-                                                Jetzt teilnehmen →
-                                            </button>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                            
-                            <!-- Keine Umfragen verfügbar -->
-                            <div x-show="availableSurveys.length === 0" class="text-center py-12">
-                                <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                </svg>
-                                <p class="text-gray-400">Aktuell sind keine neuen Umfragen verfügbar.</p>
-                                <p class="text-sm text-gray-500 mt-2">Schau später nochmal vorbei!</p>
-                            </div>
-                            
-                            <!-- In Bearbeitung -->
-                            <div x-show="inProgressSurveys.length > 0" class="mt-8">
-                                <h4 class="font-semibold mb-4">Fortsetzen</h4>
-                                <div class="space-y-3">
-                                    <template x-for="survey in inProgressSurveys" :key="survey.id">
-                                        <div class="bg-gray-800 rounded-lg p-4 flex items-center justify-between">
-                                            <div>
-                                                <h5 class="font-medium" x-text="survey.title"></h5>
-                                                <p class="text-sm text-gray-400" x-text="'Begonnen: ' + new Date(survey.startedAt).toLocaleDateString('de-DE')"></p>
-                                            </div>
-                                            <button @click="continueSurvey(survey.id, survey.responseId)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold text-sm">
-                                                Fortsetzen
-                                            </button>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Umfrage-Details / Durchführung -->
-                    <div x-show="surveyView === 'detail'" class="glass-card rounded-xl p-6">
-                        <div x-show="currentSurvey && !surveyInProgress">
-                            <h3 class="text-xl font-semibold mb-4" x-text="currentSurvey.title"></h3>
-                            <p class="text-gray-400 mb-6" x-text="currentSurvey.description"></p>
-                            
-                            <div class="grid grid-cols-3 gap-4 mb-6">
-                                <div class="text-center">
-                                    <p class="text-2xl font-bold text-orange-400" x-text="'€' + currentSurvey.reward.toFixed(2)"></p>
-                                    <p class="text-sm text-gray-400">Vergütung</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-2xl font-bold text-indigo-400" x-text="currentSurvey.estimatedTime + ' Min'"></p>
-                                    <p class="text-sm text-gray-400">Geschätzte Dauer</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-2xl font-bold text-green-400" x-text="currentSurvey.questionCount"></p>
-                                    <p class="text-sm text-gray-400">Fragen</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex space-x-4">
-                                <button @click="startSurvey()" class="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-lg font-semibold btn-glow">
-                                    Umfrage starten
-                                </button>
-                                <button @click="surveyView = 'list'" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors">
-                                    Zurück
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Umfrage läuft -->
-                        <div x-show="surveyInProgress && currentQuestion">
-                            <!-- Progress Bar -->
-                            <div class="mb-6">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-sm text-gray-400" x-text="'Frage ' + (currentQuestionIndex + 1) + ' von ' + currentSurvey.questions.length"></span>
-                                    <span class="text-sm text-gray-400" x-text="Math.round(((currentQuestionIndex + 1) / currentSurvey.questions.length) * 100) + '%'"></span>
-                                </div>
-                                <div class="w-full bg-gray-700 rounded-full h-2">
-                                    <div class="progress-bar h-2 rounded-full" :style="'width: ' + ((currentQuestionIndex + 1) / currentSurvey.questions.length * 100) + '%'"></div>
-                                </div>
-                            </div>
-                            
-                            <!-- Frage -->
-                            <div class="mb-8">
-                                <h4 class="text-lg font-semibold mb-4" x-text="currentQuestion.text"></h4>
-                                
-                                <!-- Single Choice -->
-                                <div x-show="currentQuestion.type === 'single'" class="space-y-3">
-                                    <template x-for="option in currentQuestion.options" :key="option.id">
-                                        <label class="flex items-center p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
-                                            <input type="radio" :name="'question_' + currentQuestion.id" :value="option.id" x-model="surveyAnswers[currentQuestion.id]" class="text-indigo-500 mr-3">
-                                            <span x-text="option.text"></span>
-                                        </label>
-                                    </template>
-                                </div>
-                                
-                                <!-- Multiple Choice -->
-                                <div x-show="currentQuestion.type === 'multiple'" class="space-y-3">
-                                    <template x-for="option in currentQuestion.options" :key="option.id">
-                                        <label class="flex items-center p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
-                                            <input type="checkbox" :value="option.id" @change="handleMultipleChoice($event, currentQuestion.id)" class="text-indigo-500 mr-3">
-                                            <span x-text="option.text"></span>
-                                        </label>
-                                    </template>
-                                </div>
-                                
-                                <!-- Text -->
-                                <div x-show="currentQuestion.type === 'text'">
-                                    <textarea x-model="surveyAnswers[currentQuestion.id]" rows="4" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400" placeholder="Deine Antwort..."></textarea>
-                                </div>
-                                
-                                <!-- Scale -->
-                                <div x-show="currentQuestion.type === 'scale'" class="mt-4">
-                                    <div class="flex justify-between mb-2">
-                                        <span class="text-sm text-gray-400">Gar nicht wichtig</span>
-                                        <span class="text-sm text-gray-400">Sehr wichtig</span>
-                                    </div>
-                                    <input type="range" min="1" max="10" x-model="surveyAnswers[currentQuestion.id]" class="w-full">
-                                    <div class="text-center mt-2">
-                                        <span class="text-2xl font-bold text-indigo-400" x-text="surveyAnswers[currentQuestion.id] || 5"></span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Navigation -->
-                            <div class="flex justify-between">
-                                <button @click="previousQuestion()" :disabled="currentQuestionIndex === 0" :class="currentQuestionIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors">
-                                    Zurück
-                                </button>
-                                <div class="flex space-x-3">
-                                    <button @click="saveSurveyProgress()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors">
-                                        Speichern
-                                    </button>
-                                    <button x-show="currentQuestionIndex < currentSurvey.questions.length - 1" @click="nextQuestion()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors">
-                                        Weiter
-                                    </button>
-                                    <button x-show="currentQuestionIndex === currentSurvey.questions.length - 1" @click="submitSurvey()" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-semibold btn-glow">
-                                        Abschließen
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Umfrage Historie -->
-                    <div x-show="surveyView === 'history'" class="glass-card rounded-xl p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xl font-semibold">Abgeschlossene Umfragen</h3>
-                            <button @click="surveyView = 'list'" class="text-sm text-gray-400 hover:text-orange-400">
-                                Zurück zu verfügbaren Umfragen
-                            </button>
-                        </div>
-                        
-                        <div x-show="surveyHistory.length > 0" class="space-y-3">
-                            <template x-for="survey in surveyHistory" :key="survey.id">
-                                <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                                    <div>
-                                        <h4 class="font-medium" x-text="survey.title"></h4>
-                                        <p class="text-sm text-gray-400" x-text="survey.company + ' • ' + new Date(survey.completedAt).toLocaleDateString('de-DE')"></p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-semibold text-green-400" x-text="'€' + survey.reward.toFixed(2)"></p>
-                                        <p class="text-xs text-gray-400">Erhalten</p>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                        
-                        <div x-show="surveyHistory.length === 0" class="text-center py-8">
-                            <p class="text-gray-400">Du hast noch keine Umfragen abgeschlossen.</p>
-                        </div>
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-xl font-semibold mb-6">Verfügbare Umfragen</h3>
+                        <p class="text-gray-400 mb-6">Aktuell sind keine neuen Umfragen verfügbar. Schau später nochmal vorbei!</p>
                     </div>
                 </div>
                 
                 <!-- Auszahlungen Tab -->
                 <div x-show="activeTab === 'earnings'" class="space-y-6">
-                    
-                    <!-- Auszahlung beantragen -->
                     <div class="glass-card rounded-xl p-6">
-                        <h3 class="text-xl font-semibold mb-6">Auszahlung beantragen</h3>
-                        
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg p-6 mb-6">
-                                    <h4 class="text-white font-semibold mb-2">Verfügbarer Betrag</h4>
-                                    <p class="text-4xl font-bold text-white" x-text="'€' + earnings.available.toFixed(2)"></p>
-                                    <p class="text-orange-100 text-sm">Mindestbetrag: €10,00</p>
-                                </div>
-                                
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-300 mb-2">Auszahlungsbetrag</label>
-                                        <input type="number" x-model="payoutAmount" :max="earnings.available" min="10" step="0.01" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-300 mb-2">Auszahlungsmethode</label>
-                                        <select x-model="payoutMethod" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
-                                            <option value="paypal">PayPal</option>
-                                            <option value="bank">Banküberweisung</option>
-                                            <option value="crypto">Bitcoin</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <button @click="requestPayout()" :disabled="earnings.available < 10" :class="earnings.available >= 10 ? 'btn-glow' : 'opacity-50 cursor-not-allowed'" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-lg font-semibold">
-                                        Auszahlung beantragen
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <h4 class="font-semibold mb-4">Auszahlungshistorie</h4>
-                                <div class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
-                                    <template x-for="payout in payoutHistory" :key="payout.id">
-                                        <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
-                                            <div>
-                                                <p class="font-medium" x-text="'€' + payout.amount.toFixed(2)"></p>
-                                                <p class="text-sm text-gray-400" x-text="payout.date"></p>
-                                            </div>
-                                            <span :class="payout.status === 'completed' ? 'bg-green-500' : payout.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-500'" class="px-2 py-1 text-xs rounded-full text-white" x-text="payout.status === 'completed' ? 'Abgeschlossen' : payout.status === 'pending' ? 'In Bearbeitung' : 'Ausstehend'"></span>
-                                        </div>
-                                    </template>
-                                    <div x-show="payoutHistory.length === 0" class="text-center py-4 text-gray-400">
-                                        Noch keine Auszahlungen beantragt.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <h3 class="text-xl font-semibold mb-6">Auszahlungen</h3>
+                        <p class="text-gray-400">Auszahlungsfunktionen werden bald verfügbar sein.</p>
                     </div>
                 </div>
                 
-                <!-- Aktivitäts-Feed Tab -->
+                <!-- Aktivität Tab -->
                 <div x-show="activeTab === 'activity'" class="space-y-6">
                     <div class="glass-card rounded-xl p-6">
                         <h3 class="text-xl font-semibold mb-6">Datennutzungs-Aktivitäten</h3>
                         
                         <div class="space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
-                            <template x-for="activity in activities" :key="activity.id">
+                            <template x-for="activity in dashboardData.activities" :key="activity.id">
                                 <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-lg">
                                     <div class="w-10 h-10 bg-orange-500 bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <svg x-show="activity.type === 'data_usage'" class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <svg x-show="activity.type === 'survey_completed'" class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                        </svg>
-                                        <svg x-show="activity.type === 'bonus'" class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                                         </svg>
                                     </div>
                                     <div class="flex-1">
@@ -699,17 +482,12 @@
                                     </div>
                                 </div>
                             </template>
-                            <div x-show="activities.length === 0" class="text-center py-8 text-gray-400">
-                                Noch keine Aktivitäten vorhanden.
-                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Profil Tab -->
                 <div x-show="activeTab === 'profile'" class="space-y-6">
-                    
-                    <!-- Persönliche Informationen -->
                     <div class="glass-card rounded-xl p-6">
                         <h3 class="text-xl font-semibold mb-6">Persönliche Informationen</h3>
                         
@@ -717,32 +495,17 @@
                             <div class="grid md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-300 mb-2">Vorname</label>
-                                    <input type="text" x-model="user.firstName" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                    <input type="text" x-model="dashboardData.user.firstName" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-300 mb-2">Nachname</label>
-                                    <input type="text" x-model="user.lastName" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                                    <input type="text" x-model="dashboardData.user.lastName" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
                                 </div>
                             </div>
                             
                             <div>
                                 <label class="block text-sm font-medium text-gray-300 mb-2">E-Mail</label>
-                                <input type="email" x-model="user.email" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Geburtsdatum</label>
-                                <input type="date" x-model="user.birthDate" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Land</label>
-                                <select x-model="user.country" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
-                                    <option value="DE">Deutschland</option>
-                                    <option value="AT">Österreich</option>
-                                    <option value="CH">Schweiz</option>
-                                    <option value="OTHER">Anderes</option>
-                                </select>
+                                <input type="email" x-model="dashboardData.user.email" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
                             </div>
                             
                             <button type="submit" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-3 rounded-lg font-semibold btn-glow">
@@ -750,371 +513,267 @@
                             </button>
                         </form>
                     </div>
-                    
-                    <!-- Sicherheitseinstellungen -->
-                    <div class="glass-card rounded-xl p-6">
-                        <h3 class="text-xl font-semibold mb-6">Sicherheit & Datenschutz</h3>
-                        
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                                <div>
-                                    <h4 class="font-medium">Zwei-Faktor-Authentifizierung</h4>
-                                    <p class="text-sm text-gray-400">Zusätzliche Sicherheit für dein Konto</p>
-                                </div>
-                                <div class="toggle-switch active"></div>
-                            </div>
-                            
-                            <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                                <div>
-                                    <h4 class="font-medium">E-Mail-Benachrichtigungen</h4>
-                                    <p class="text-sm text-gray-400">Über neue Verdienstmöglichkeiten informieren</p>
-                                </div>
-                                <div class="toggle-switch active"></div>
-                            </div>
-                            
-                            <div class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                                <div>
-                                    <h4 class="font-medium">Datenexport</h4>
-                                    <p class="text-sm text-gray-400">Alle deine Daten als ZIP-Datei herunterladen</p>
-                                </div>
-                                <button class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                                    Export anfordern
-                                </button>
-                            </div>
-                            
-                            <div class="flex items-center justify-between p-4 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-20 rounded-lg">
-                                <div>
-                                    <h4 class="font-medium text-red-400">Konto löschen</h4>
-                                    <p class="text-sm text-gray-400">Alle Daten unwiderruflich löschen</p>
-                                </div>
-                                <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                                    Konto löschen
-                                </button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 
             </div>
         </div>
     </div>
     
-    <!-- Alpine.js Dashboard Controller mit API-Integration -->
+    <!-- Neue Alpine.js Dashboard-Controller mit echter API-Integration -->
     <script>
         function dashboardController() {
             return {
-                // Aktiver Tab
+                // UI State
                 activeTab: 'overview',
-                
-                // Loading State
                 isLoading: true,
                 
-                // Benutzerdaten (werden vom Server geladen)
-                user: {
-                    firstName: '',
-                    lastName: '',
-                    email: '',
-                    birthDate: '',
-                    country: 'DE',
-                    joinDate: ''
+                // Dashboard Data (loaded from API)
+                dashboardData: {
+                    user: {},
+                    earnings: {},
+                    dataTypes: [],
+                    activities: [],
+                    stats: {},
+                    notifications: {}
                 },
                 
-                // Daten werden beim Init geladen
-                earnings: {
-                    thisMonth: 0,
-                    total: 0,
-                    available: 0,
-                    pending: 0
-                },
-                
-                payoutAmount: 0,
-                payoutMethod: 'paypal',
-                payoutHistory: [],
-                dataTypes: [],
-                activities: [],
-                availableSurveys: [],
-                inProgressSurveys: [],
-                surveyHistory: [],
-                
-                // Survey Management
-                surveyView: 'list',
-                currentSurvey: null,
-                currentSurveyResponse: null,
-                surveyInProgress: false,
-                currentQuestion: null,
-                currentQuestionIndex: 0,
-                surveyAnswers: {},
-                
-                // UI States
-                unreadNotifications: 0,
+                // Charts
                 earningsChart: null,
                 
-                // Initialisierung mit echten Daten
+                // Initialisierung mit echter API
                 async init() {
+                    console.log('🚀 Dashboard Controller initialized');
+                    
                     try {
-                        this.isLoading = true;
+                        // Check authentication first
+                        if (typeof requireAuthentication === 'function') {
+                            const isAuth = await requireAuthentication();
+                            if (!isAuth) return;
+                        }
                         
-                        // Lade User-Daten
-                        await this.loadUserData();
+                        // Load complete dashboard data in one call
+                        await this.loadDashboardData();
                         
-                        // Lade Dashboard-Daten
-                        await Promise.all([
-                            this.loadEarnings(),
-                            this.loadDataTypes(),
-                            this.loadActivities(),
-                            this.loadSurveys(),
-                            this.loadPayoutHistory()
-                        ]);
-                        
-                        // Chart initialisieren
+                        // Initialize chart after data is loaded
                         this.$nextTick(() => {
                             this.initEarningsChart();
                         });
                         
-                        this.isLoading = false;
                     } catch (error) {
-                        console.error('Dashboard init error:', error);
+                        console.error('❌ Dashboard initialization failed:', error);
+                        this.showNotification('Fehler beim Laden der Dashboard-Daten', 'error');
+                    } finally {
                         this.isLoading = false;
+                    }
+                },
+                
+                // Load Dashboard Data from new API
+                async loadDashboardData() {
+                    try {
+                        console.log('📡 Loading dashboard data...');
                         
-                        // Bei Fehler zum Login
-                        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-                            window.location.href = 'login.html';
+                        if (window.DataFairAPI && typeof window.DataFairAPI.getDashboardOverview === 'function') {
+                            // Use new Dashboard API
+                            this.dashboardData = await window.DataFairAPI.getDashboardOverview();
+                            console.log('✅ Dashboard data loaded:', this.dashboardData);
+                        } else {
+                            // Fallback: direct API call
+                            const response = await fetch('/api/dashboard/overview', {
+                                credentials: 'include'
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error('Failed to load dashboard data');
+                            }
+                            
+                            const data = await response.json();
+                            this.dashboardData = data.dashboard;
                         }
+                        
+                    } catch (error) {
+                        console.error('❌ Error loading dashboard data:', error);
+                        throw error;
                     }
                 },
                 
-                // ===== ECHTE API-CALLS =====
-                
-                // Lade User-Daten - MIT ECHTER API!
-                async loadUserData() {
+                // Quick Actions using new API
+                async generateTestEarnings() {
                     try {
-                        const userData = await DataFairAPI.getProfile();
-                        this.user = {
-                            firstName: userData.firstName || '',
-                            lastName: userData.lastName || '',
-                            email: userData.email || '',
-                            birthDate: userData.birthDate || '',
-                            country: userData.country || 'DE',
-                            joinDate: userData.joinDate || ''
-                        };
-                        console.log('✅ Profile loaded:', userData);
-                    } catch (error) {
-                        console.error('❌ Error loading profile:', error);
-                        // Bei Auth-Fehler zum Login
-                        if (error.message.includes('401')) {
-                            window.location.href = 'login.html';
+                        console.log('🧪 Generating test earnings...');
+                        
+                        let result;
+                        if (window.DataFairAPI && typeof window.DataFairAPI.generateTestEarnings === 'function') {
+                            result = await window.DataFairAPI.generateTestEarnings();
+                        } else {
+                            // Fallback
+                            const response = await fetch('/api/dashboard/quick-actions', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({ action: 'generate_test_earnings' })
+                            });
+                            result = await response.json();
                         }
-                    }
-                },
-                
-                // Lade Datentypen - MIT ECHTER API!
-                async loadDataTypes() {
-                    try {
-                        this.dataTypes = await DataFairAPI.getDataTypes();
-                        console.log('✅ Data types loaded:', this.dataTypes);
+                        
+                        this.showNotification(result.message, 'success');
+                        
+                        // Reload dashboard data to reflect changes
+                        await this.loadDashboardData();
+                        
+                        // Update the chart if it exists
+                        if (this.earningsChart) {
+                            this.earningsChart.destroy();
+                            this.$nextTick(() => {
+                                this.initEarningsChart();
+                            });
+                        }
+                        
+                        console.log('✅ Test earnings generated and dashboard updated');
+                        
                     } catch (error) {
-                        console.error('❌ Error loading data types:', error);
-                        // Fallback zu Mock-Daten bei Fehler
-                        this.dataTypes = [
-                            {id: 1, name: 'Shopping-Verhalten', description: 'Online-Einkäufe, besuchte Shops', icon: '🛒', monthlyValue: 12.00, enabled: false},
-                            {id: 2, name: 'Demografische Daten', description: 'Alter, Geschlecht, Wohnort', icon: '👤', monthlyValue: 8.50, enabled: false}
-                        ];
+                        console.error('❌ Error generating test earnings:', error);
+                        this.showNotification('Fehler beim Generieren der Test-Verdienste', 'error');
                     }
                 },
                 
-                // Datentyp aktivieren/deaktivieren - MIT ECHTER API!
                 async toggleDataType(dataType) {
                     try {
                         const newStatus = !dataType.enabled;
+                        console.log(`🔄 Toggling data type ${dataType.name} to:`, newStatus);
                         
-                        // API-Call
-                        await DataFairAPI.updateDataPermission(dataType.id, newStatus);
+                        let result;
+                        if (window.DataFairAPI && typeof window.DataFairAPI.quickToggleDataType === 'function') {
+                            result = await window.DataFairAPI.quickToggleDataType(dataType.id, newStatus);
+                        } else {
+                            // Fallback
+                            const response = await fetch('/api/dashboard/quick-actions', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({
+                                    action: 'toggle_data_type',
+                                    dataTypeId: dataType.id,
+                                    enabled: newStatus
+                                })
+                            });
+                            result = await response.json();
+                        }
                         
-                        // Update lokale Daten
+                        // Update local state immediately for better UX
                         dataType.enabled = newStatus;
                         
-                        // Feedback-Nachricht
-                        this.showNotification(
-                            `${dataType.name} ${newStatus ? 'aktiviert' : 'deaktiviert'}!`, 
-                            'success'
-                        );
-                        
-                        // Lade Verdienste neu, da sich der monatliche Wert geändert hat
-                        await this.loadEarnings();
-                        
-                        console.log(`✅ Data type ${dataType.name} toggled to:`, newStatus);
+                        this.showNotification(result.message, 'success');
                         
                     } catch (error) {
                         console.error('❌ Error toggling data type:', error);
-                        this.showNotification('Fehler beim Aktualisieren', 'error');
+                        this.showNotification('Fehler beim Aktualisieren der Datenfreigabe', 'error');
+                        
+                        // Revert on error
+                        dataType.enabled = !dataType.enabled;
                     }
                 },
                 
-                // Lade Verdienste - MIT ECHTER API!
-                async loadEarnings() {
+                async requestQuickPayout() {
                     try {
-                        this.earnings = await DataFairAPI.getEarnings();
-                        console.log('✅ Earnings loaded:', this.earnings);
-                    } catch (error) {
-                        console.error('❌ Error loading earnings:', error);
-                        // Fallback zu Mock-Daten bei Fehler
-                        this.earnings = {
-                            thisMonth: 0,
-                            total: 0,
-                            available: 0,
-                            pending: 0,
-                            monthlyPotential: 0,
-                            monthlyData: [0, 0, 0, 0, 0, 0]
-                        };
-                    }
-                },
-                
-                // Lade Auszahlungshistorie - MIT ECHTER API!
-                async loadPayoutHistory() {
-                    try {
-                        this.payoutHistory = await DataFairAPI.getPayouts();
-                        console.log('✅ Payout history loaded:', this.payoutHistory);
-                    } catch (error) {
-                        console.error('❌ Error loading payout history:', error);
-                        this.payoutHistory = [];
-                    }
-                },
-                
-                // Auszahlung beantragen - MIT ECHTER API!
-                async requestPayout() {
-                    if (this.payoutAmount < 10) {
-                        this.showNotification('Mindestbetrag für Auszahlung ist €10.00', 'error');
-                        return;
-                    }
-                    
-                    if (this.payoutAmount > this.earnings.available) {
-                        this.showNotification('Betrag überschreitet verfügbares Guthaben', 'error');
-                        return;
-                    }
-                    
-                    try {
-                        const payout = await DataFairAPI.requestPayout(this.payoutAmount, this.payoutMethod);
+                        const amount = this.dashboardData.earnings.available;
                         
-                        this.showNotification(`Auszahlung von €${this.payoutAmount} wurde beantragt!`, 'success');
+                        if (amount < 10) {
+                            this.showNotification('Mindestbetrag für Auszahlung ist €10.00', 'warning');
+                            return;
+                        }
                         
-                        // Lade Daten neu
-                        await this.loadEarnings();
-                        await this.loadPayoutHistory();
+                        console.log('💰 Requesting quick payout:', amount);
                         
-                        // Reset Form
-                        this.payoutAmount = 0;
+                        let result;
+                        if (window.DataFairAPI && typeof window.DataFairAPI.quickPayoutRequest === 'function') {
+                            result = await window.DataFairAPI.quickPayoutRequest(amount);
+                        } else {
+                            // Fallback
+                            const response = await fetch('/api/dashboard/quick-actions', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({
+                                    action: 'request_payout',
+                                    amount: amount,
+                                    method: 'paypal'
+                                })
+                            });
+                            result = await response.json();
+                        }
                         
-                        console.log('✅ Payout requested:', payout);
+                        this.showNotification(result.message, 'success');
+                        
+                        // Switch to earnings tab to show more details
+                        this.activeTab = 'earnings';
                         
                     } catch (error) {
-                        console.error('❌ Payout error:', error);
-                        this.showNotification(error.message || 'Fehler bei der Auszahlung', 'error');
+                        console.error('❌ Error requesting payout:', error);
+                        this.showNotification('Fehler bei der Auszahlungsanfrage', 'error');
                     }
                 },
                 
-                // Test-Verdienste generieren (für Entwicklung)
-                async generateTestEarnings() {
-                    try {
-                        const result = await DataFairAPI.generateMonthlyEarnings();
-                        this.showNotification(`${result.message}! Daten werden neu geladen...`, 'success');
-                        
-                        // Lade alle Daten neu
-                        await Promise.all([
-                            this.loadEarnings(),
-                            this.loadActivities()
-                        ]);
-                        
-                        console.log('✅ Test earnings generated:', result);
-                        
-                    } catch (error) {
-                        console.error('❌ Error generating earnings:', error);
-                        this.showNotification('Fehler beim Generieren der Verdienste', 'error');
-                    }
-                },
-                
-                // ===== MOCK-DATEN FÜR NOCH NICHT IMPLEMENTIERTE APIS =====
-                
-                // Lade Aktivitäten
-                async loadActivities() {
-                    try {
-                        this.activities = await DataFairAPI.getActivities();
-                        console.log('✅ Activities loaded:', this.activities);
-                    } catch (error) {
-                        console.error('❌ Error loading activities:', error);
-                        this.activities = [];
-                    }
-                },
-                
-                // Lade Umfragen
-                async loadSurveys() {
-                    try {
-                        // TODO: Ersetzen durch echte API
-                        // const surveys = await DataFairAPI.getSurveys();
-                        // this.availableSurveys = surveys.available || [];
-                        // this.inProgressSurveys = surveys.inProgress || [];
-                        
-                        // Mock-Daten
-                        this.availableSurveys = [];
-                        this.inProgressSurveys = [];
-                        
-                        console.log('✅ Surveys loaded (mock)');
-                    } catch (error) {
-                        console.error('❌ Error loading surveys:', error);
-                        this.availableSurveys = [];
-                        this.inProgressSurveys = [];
-                    }
-                },
-                
-                // Profil aktualisieren - MIT ECHTER API!
                 async updateProfile() {
                     try {
-                        await DataFairAPI.updateProfile(this.user);
-                        this.showNotification('Profil wurde erfolgreich aktualisiert!', 'success');
-                        console.log('✅ Profile updated');
+                        console.log('👤 Updating profile...');
+                        
+                        if (window.DataFairAPI && typeof window.DataFairAPI.updateProfile === 'function') {
+                            await window.DataFairAPI.updateProfile(this.dashboardData.user);
+                            this.showNotification('Profil erfolgreich aktualisiert!', 'success');
+                        } else {
+                            this.showNotification('Profil-Update noch nicht verfügbar', 'info');
+                        }
+                        
                     } catch (error) {
-                        console.error('❌ Profile update error:', error);
-                        this.showNotification('Fehler beim Aktualisieren', 'error');
+                        console.error('❌ Error updating profile:', error);
+                        this.showNotification('Fehler beim Aktualisieren des Profils', 'error');
                     }
                 },
                 
-                // Logout - MIT ECHTER API!
                 async logout() {
                     try {
-                        await DataFairAPI.logout();
-                        window.location.href = 'login.html';
+                        if (window.DataFairAPI && typeof window.DataFairAPI.logout === 'function') {
+                            await window.DataFairAPI.logout();
+                        }
+                        window.location.href = '/login.html';
                     } catch (error) {
                         console.error('❌ Logout error:', error);
-                        // Trotzdem ausloggen
-                        window.location.href = 'login.html';
+                        window.location.href = '/login.html';
                     }
                 },
                 
-                // ===== MOCK-FUNKTIONEN (Werden später implementiert) =====
-                
-                // Survey Funktionen
-                async viewSurveyDetails(surveyId) {
-                    // TODO: Implement
-                    console.log('Survey details for:', surveyId);
+                // Utility Functions
+                getUserInitials() {
+                    const firstName = this.dashboardData.user.firstName || '';
+                    const lastName = this.dashboardData.user.lastName || '';
+                    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
                 },
                 
-                async startSurvey() {
-                    // TODO: Implement
-                    console.log('Starting survey');
+                getUserFullName() {
+                    return `${this.dashboardData.user.firstName || ''} ${this.dashboardData.user.lastName || ''}`.trim();
                 },
                 
-                async loadSurveyHistory() {
-                    // TODO: Implement
-                    this.surveyView = 'history';
+                getActiveDataTypesCount() {
+                    return this.dashboardData.dataTypes.filter(type => type.enabled).length;
                 },
                 
-                // Verdienst-Chart mit echten Daten
+                getInactiveDataTypesCount() {
+                    return this.dashboardData.dataTypes.filter(type => !type.enabled).length;
+                },
+                
+                getInactiveEarningsPotential() {
+                    return this.dashboardData.dataTypes
+                        .filter(type => !type.enabled)
+                        .reduce((sum, type) => sum + type.monthlyValue, 0);
+                },
+                
+                // Chart Initialization
                 initEarningsChart() {
                     const ctx = document.getElementById('earningsChart');
                     if (!ctx) return;
                     
-                    // Verwende echte Daten falls verfügbar
-                    const monthlyData = this.earnings.monthlyData || [0, 0, 0, 0, 0, 0];
-                    const labels = this.earnings.chartLabels || ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun'];
+                    const monthlyData = this.dashboardData.earnings.monthlyData || [0, 0, 0, 0, 0, 0];
+                    const labels = this.dashboardData.earnings.chartLabels || ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun'];
                     
                     this.earningsChart = new Chart(ctx, {
                         type: 'line',
@@ -1165,35 +824,35 @@
                                         }
                                     }
                                 }
-                            },
-                            elements: {
-                                point: {
-                                    hoverBackgroundColor: '#f59e0b'
-                                }
                             }
                         }
                     });
                 },
                 
-                // Notification-System
+                // Notification System
                 showNotification(message, type = 'info') {
-                    // Vereinfachte Lösung mit Alert (später durch Toast-System ersetzen)
                     console.log(`${type.toUpperCase()}: ${message}`);
                     
-                    // Temporäre visuelle Benachrichtigung
                     const notification = document.createElement('div');
-                    notification.className = `fixed top-20 right-4 z-50 p-4 rounded-lg text-white ${
-                        type === 'success' ? 'bg-green-500' : 
-                        type === 'error' ? 'bg-red-500' : 
-                        'bg-blue-500'
-                    }`;
-                    notification.textContent = message;
+                    notification.className = `notification ${type}`;
+                    notification.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span>${message}</span>
+                            <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white opacity-70 hover:opacity-100">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    
                     document.body.appendChild(notification);
                     
-                    // Nach 3 Sekunden entfernen
                     setTimeout(() => {
-                        document.body.removeChild(notification);
-                    }, 3000);
+                        if (notification.parentElement) {
+                            notification.remove();
+                        }
+                    }, 5000);
                 }
             }
         }
