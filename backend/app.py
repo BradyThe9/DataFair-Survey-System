@@ -1,32 +1,42 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-DataFair Survey System - Main Application
-Flask Backend mit korrigierter Flask-Login Konfiguration + Dashboard
+DataFair - Main Application
+Mit korrigierten Frontend-Routes
 """
 
 import os
 import sys
 from datetime import datetime
-from flask import Flask, render_template, send_from_directory, jsonify, redirect, url_for, request
+from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
-from flask_login import LoginManager, login_required, current_user
+from flask_login import LoginManager, current_user
 from werkzeug.security import generate_password_hash
 
-# Add the current directory to the path
+# Add current directory to path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
 # Import our modules
 from app.database import db, init_db
-from app.models import User, Survey, SurveyResponse
+from app.models import User, Survey
 from config import Config
 
 def create_app():
     """Application Factory Pattern"""
-    app = Flask(__name__, 
-                static_folder='../frontend',
-                template_folder='../frontend/pages')
+    
+    # Bestimme die korrekten Pfade
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(backend_dir)
+    frontend_dir = os.path.join(project_root, 'frontend')
+    pages_dir = os.path.join(frontend_dir, 'pages')
+    assets_dir = os.path.join(frontend_dir, 'assets')
+    
+    print(f"Backend dir: {backend_dir}")
+    print(f"Frontend dir: {frontend_dir}")
+    print(f"Pages dir: {pages_dir}")
+    
+    app = Flask(__name__)
     
     # Load configuration
     app.config.from_object(Config)
@@ -34,17 +44,17 @@ def create_app():
     # Initialize database
     init_db(app)
     
-    # CORS Configuration - Korrigiert für alle Origins
+    # CORS Configuration
     CORS(app, 
-         origins=["http://localhost:5000", "http://127.0.0.1:5000", "http://localhost:3000"],
+         origins=["http://localhost:5000", "http://127.0.0.1:5000"],
          supports_credentials=True,
          allow_headers=["Content-Type", "Authorization"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
     
-    # Flask-Login Configuration - KORRIGIERT
+    # Flask-Login Configuration
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'  # Korrigierter Endpoint
+    login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Bitte melde dich an, um auf diese Seite zuzugreifen.'
     login_manager.login_message_category = 'info'
     
@@ -52,148 +62,168 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
     
-    # Import and register blueprints
+    # Register Core Blueprints (funktionieren garantiert)
     from app.routes.auth import auth_bp
-    from app.routes.api import api_bp
+    from app.routes.api import api_bp  
     from app.routes.surveys import surveys_bp
-    from app.routes.dashboard_routes import dashboard_bp  # NEU!
+    from app.routes.dashboard_routes import dashboard_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(surveys_bp, url_prefix='/api/surveys')
-    app.register_blueprint(dashboard_bp)  # NEU! Dashboard hat bereits /api/dashboard prefix
+    app.register_blueprint(dashboard_bp)  # Has own prefix
     
-    # Frontend Routes - Korrigierte Reihenfolge
+    # Optional Blueprints (nur registrieren wenn sie funktionieren)
+    try:
+        from app.routes.data_routes import data_bp
+        app.register_blueprint(data_bp, url_prefix='/api')
+        print("✅ Data routes loaded")
+    except ImportError as e:
+        print(f"⚠️  Data routes skipped: {e}")
+    
+    try:
+        from app.routes.earning_routes import earning_bp
+        app.register_blueprint(earning_bp, url_prefix='/api')
+        print("✅ Earning routes loaded")
+    except ImportError as e:
+        print(f"⚠️  Earning routes skipped: {e}")
+    
+    try:
+        from app.routes.user_routes import user_bp
+        app.register_blueprint(user_bp, url_prefix='/api')
+        print("✅ User routes loaded")
+    except ImportError as e:
+        print(f"⚠️  User routes skipped: {e}")
+    
+    # =========================
+    # FRONTEND ROUTES (KORRIGIERT)
+    # =========================
+    
     @app.route('/')
     def index():
         """Startseite"""
-        return send_from_directory('../frontend/pages', 'index.html')
+        print(f"📍 Serving index from: {pages_dir}")
+        return send_from_directory(pages_dir, 'index.html')
     
+    # Explizite HTML-Routes
     @app.route('/index.html')
     def index_alt():
-        """Alternative Startseite Route"""
-        return send_from_directory('../frontend/pages', 'index.html')
-    
-    @app.route('/pages/index.html')
-    def index_pages():
-        """Startseite über /pages/ Route"""
-        return send_from_directory('../frontend/pages', 'index.html')
+        return send_from_directory(pages_dir, 'index.html')
     
     @app.route('/login.html')
     def login_page():
-        """Login-Seite"""
-        return send_from_directory('../frontend/pages', 'login.html')
-    
-    @app.route('/pages/login.html')
-    def login_page_pages():
-        """Login-Seite über /pages/ Route"""
-        return send_from_directory('../frontend/pages', 'login.html')
+        return send_from_directory(pages_dir, 'login.html')
     
     @app.route('/register.html')
     def register_page():
-        """Registrierung-Seite"""
-        return send_from_directory('../frontend/pages', 'register.html')
-    
-    @app.route('/pages/register.html')
-    def register_page_pages():
-        """Registrierung-Seite über /pages/ Route"""
-        return send_from_directory('../frontend/pages', 'register.html')
+        return send_from_directory(pages_dir, 'register.html')
     
     @app.route('/dashboard.html')
-    @login_required
     def dashboard_page():
-        """Dashboard-Seite (Login erforderlich)"""
-        return send_from_directory('../frontend/pages', 'dashboard.html')
-    
-    @app.route('/pages/dashboard.html')
-    @login_required
-    def dashboard_page_pages():
-        """Dashboard-Seite über /pages/ Route (Login erforderlich)"""
-        return send_from_directory('../frontend/pages', 'dashboard.html')
+        return send_from_directory(pages_dir, 'dashboard.html')
     
     @app.route('/enterprise.html')
     def enterprise_page():
-        """Enterprise-Seite"""
-        return send_from_directory('../frontend/pages', 'enterprise.html')
+        return send_from_directory(pages_dir, 'enterprise.html')
     
-    @app.route('/pages/enterprise.html')
-    def enterprise_page_pages():
-        """Enterprise-Seite über /pages/ Route"""
-        return send_from_directory('../frontend/pages', 'enterprise.html')
+    # Legacy /pages/ routes (falls irgendwo noch verlinkt)
+    @app.route('/pages/<filename>')
+    def serve_pages_legacy(filename):
+        print(f"📄 Legacy page request: {filename}")
+        return send_from_directory(pages_dir, filename)
     
-    # Static Files and Assets - Erweitert
+    # Assets
     @app.route('/assets/<path:filename>')
-    def assets(filename):
-        """Serve static assets"""
-        return send_from_directory('../frontend/assets', filename)
+    def serve_assets(filename):
+        print(f"🎨 Asset request: {filename}")
+        return send_from_directory(assets_dir, filename)
     
+    # Frontend assets (alternative path)
     @app.route('/frontend/assets/<path:filename>')
-    def frontend_assets(filename):
-        """Alternative asset route"""
-        return send_from_directory('../frontend/assets', filename)
-        
-    @app.route('/pages/<path:filename>')
-    def pages_fallback(filename):
-        """Fallback for any /pages/ requests"""
-        try:
-            return send_from_directory('../frontend/pages', filename)
-        except:
-            return "Page not found", 404
+    def serve_frontend_assets(filename):
+        return send_from_directory(assets_dir, filename)
     
     # Favicon
     @app.route('/favicon.ico')
     def favicon():
-        return send_from_directory('../frontend/assets/images', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+        return send_from_directory(assets_dir, 'favicon.ico')
     
-    # Health Check
+    # =========================
+    # API ROUTES
+    # =========================
+    
     @app.route('/health')
     def health_check():
-        """System Health Check"""
         return jsonify({
             'status': 'healthy',
             'timestamp': datetime.utcnow().isoformat(),
             'version': '1.0.0',
-            'surveys_enabled': True,
-            'dashboard_enabled': True  # NEU!
+            'paths': {
+                'frontend_dir': frontend_dir,
+                'pages_dir': pages_dir,
+                'assets_dir': assets_dir
+            },
+            'features': {
+                'auth': True,
+                'surveys': True,
+                'dashboard': True,
+                'earnings': 'partial',
+                'data_permissions': 'pending'
+            }
         })
     
-    # API Documentation
     @app.route('/api')
-    def api_docs():
-        """API Documentation"""
+    def api_info():
         return jsonify({
-            'message': 'DataFair Survey System API',
+            'name': 'DataFair API',
             'version': '1.0.0',
+            'description': 'Fair compensation for personal data',
             'endpoints': {
                 'auth': '/auth/',
+                'api': '/api/',
                 'surveys': '/api/surveys/',
-                'dashboard': '/api/dashboard/',  # NEU!
-                'users': '/api/users/',
+                'dashboard': '/api/dashboard/',
                 'health': '/health'
             }
         })
     
-    # Error Handlers
+    # Debug: Liste alle verfügbaren Routen
+    @app.route('/debug/routes')
+    def debug_routes():
+        routes = []
+        for rule in app.url_map.iter_rules():
+            routes.append({
+                'endpoint': rule.endpoint,
+                'methods': list(rule.methods),
+                'rule': str(rule)
+            })
+        return jsonify({'routes': routes})
+    
+    # =========================
+    # ERROR HANDLERS
+    # =========================
+    
     @app.errorhandler(404)
     def not_found(error):
-        return jsonify({'error': 'Not found'}), 404
+        print(f"❌ 404 Error: {error}")
+        return jsonify({'error': 'Not found', 'path': str(error)}), 404
     
     @app.errorhandler(500)
     def internal_error(error):
         db.session.rollback()
+        print(f"❌ 500 Error: {error}")
         return jsonify({'error': 'Internal server error'}), 500
     
     return app
 
 def create_demo_data():
-    """Create demo user and sample surveys"""
+    """Create demo user and sample data"""
     print("Checking for demo user...")
     
     # Check if demo user exists
     demo_user = User.query.filter_by(email='demo@datafair.com').first()
     
     if not demo_user:
-        # Create demo user
         demo_user = User(
             email='demo@datafair.com',
             password_hash=generate_password_hash('demo123'),
@@ -202,85 +232,33 @@ def create_demo_data():
             is_verified=True
         )
         db.session.add(demo_user)
-        print("✅ Demo user created!")
-        print("Email: demo@datafair.com")
-        print("Password: demo123")
+        print("✅ Demo user created: demo@datafair.com / demo123")
     else:
         print("✅ Demo user already exists!")
     
     # Check for surveys
     survey_count = Survey.query.count()
-    
     if survey_count == 0:
-        # Create sample surveys
-        import json
-        
-        survey1_questions = [
-            {
-                "id": 1,
-                "question": "Wie oft kaufen Sie online ein?",
-                "type": "multiple_choice",
-                "options": ["Täglich", "Wöchentlich", "Monatlich", "Selten"]
-            },
-            {
-                "id": 2,
-                "question": "Was ist Ihnen beim Online-Shopping am wichtigsten?",
-                "type": "multiple_choice",
-                "options": ["Preis", "Qualität", "Lieferzeit", "Nachhaltigkeit"]
-            }
-        ]
-        
-        survey2_questions = [
-            {
-                "id": 1,
-                "question": "Wie viele Stunden pro Tag nutzen Sie Ihr Smartphone?",
-                "type": "multiple_choice",
-                "options": ["1-2 Stunden", "3-4 Stunden", "5-6 Stunden", "Mehr als 6 Stunden"]
-            },
-            {
-                "id": 2,
-                "question": "Welche Apps nutzen Sie am häufigsten?",
-                "type": "multiple_choice",
-                "options": ["Social Media", "Nachrichten", "Shopping", "Games"]
-            }
-        ]
-        
-        survey1 = Survey(
-            title="Konsumverhalten Studie 2025",
-            description="Eine Umfrage über moderne Konsumgewohnheiten",
-            questions=json.dumps(survey1_questions),  # Convert to JSON string
-            reward_amount=15.50,
-            max_responses=1000,
-            is_active=True
-        )
-        
-        survey2 = Survey(
-            title="Technologie-Nutzung im Alltag",
-            description="Umfrage zur Nutzung digitaler Technologien",
-            questions=json.dumps(survey2_questions),  # Convert to JSON string
-            reward_amount=12.00,
-            max_responses=500,
-            is_active=True
-        )
-        
-        db.session.add(survey1)
-        db.session.add(survey2)
-        print("✅ 2 sample surveys created!")
+        # Import and run survey seeding
+        try:
+            from seed_surveys import seed_surveys
+            seed_surveys()
+            print("✅ Sample surveys created!")
+        except ImportError:
+            print("⚠️ Survey seeding not available")
     else:
         print(f"✅ {survey_count} surveys already exist")
     
     db.session.commit()
 
 if __name__ == '__main__':
-    print("✅ Survey system loaded!")
-    print("✅ Dashboard system loaded!")  # NEU!
-    print("🚀 Initializing DataFair Application...")
+    print("🚀 Starting DataFair Application...")
     print("=" * 50)
     
     # Create Flask app
     app = create_app()
     
-    # Create tables and demo data
+    # Initialize database and demo data
     with app.app_context():
         db.create_all()
         print("✅ Database tables created/verified")
@@ -288,13 +266,11 @@ if __name__ == '__main__':
     
     print("=" * 50)
     print("🎉 DataFair Application Ready!")
-    print(f"📍 Available at: http://127.0.0.1:5000")
-    print(f"👤 Demo Login: demo@datafair.com / demo123")
-    print(f"📋 Survey System: ✅ ACTIVE")
-    print(f"📊 Dashboard System: ✅ ACTIVE")  # NEU!
-    print(f"🧪 Test Endpoint: http://127.0.0.1:5000/api/surveys/test")
-    print(f"📋 Available Surveys: http://127.0.0.1:5000/api/surveys/available")
-    print(f"📊 Dashboard API: http://127.0.0.1:5000/api/dashboard/overview")  # NEU!
+    print(f"📍 URL: http://127.0.0.1:5000")
+    print(f"👤 Demo Login: demo@datafair.com / demo123") 
+    print(f"📊 Dashboard: http://127.0.0.1:5000/dashboard.html")
+    print(f"🧪 Health Check: http://127.0.0.1:5000/health")
+    print(f"🔧 Debug Routes: http://127.0.0.1:5000/debug/routes")
     print("=" * 50)
     
     # Start the application

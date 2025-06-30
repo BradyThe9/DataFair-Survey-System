@@ -1,0 +1,47 @@
+{
+    "name": "datafair",
+    "version": "1.0.0",
+    "description": "DataFair - Fair compensation platform for personal data",
+    "main": "frontend/pages/index.html",
+    "scripts": {
+      "dev": "python backend/app.py",
+      "start": "python backend/app.py",
+      "build": "echo 'No build step needed - using CDN for dependencies'",
+      "test": "python -m pytest backend/tests/",
+      "lint": "echo 'Linting would go here'",
+      "clean": "find . -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/your-username/datafair.git"
+    },
+    "keywords": [
+      "data-privacy",
+      "fair-compensation", 
+      "surveys",
+      "gdpr",
+      "personal-data",
+      "marketplace"
+    ],
+    "author": "DataFair Development Team",
+    "license": "MIT",
+    "engines": {
+      "node": ">=14.0.0",
+      "python": ">=3.8.0"
+    },
+    "devDependencies": {
+      "prettier": "^2.8.0",
+      "eslint": "^8.0.0"
+    },
+    "dependencies": {},
+    "browserslist": [
+      "> 1%",
+      "last 2 versions",
+      "not dead"
+    ],
+    "directories": {
+      "lib": "backend",
+      "doc": "docs",
+      "test": "backend/tests"
+    }
+  }
