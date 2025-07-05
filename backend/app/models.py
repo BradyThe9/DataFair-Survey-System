@@ -350,3 +350,45 @@ class Payout(db.Model):
             'requested_at': self.requested_at.isoformat(),
             'completed_at': self.completed_at.isoformat() if self.completed_at else None
         }
+    
+class Activity(db.Model):
+    """Activity Model to track user activities and actions"""
+    __tablename__ = 'activities'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Foreign keys
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Activity details
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    activity_type = db.Column(db.String(50), nullable=False)  # 'data_usage', 'payout_requested', 'survey_completed', etc.
+    earning = db.Column(db.Numeric(10, 2), default=0.00)
+    company = db.Column(db.String(100))
+    
+    # Additional data (renamed from metadata to avoid SQLAlchemy conflict)
+    additional_data = db.Column(db.Text)  # JSON string for additional data
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='activities')
+    
+    def __repr__(self):
+        return f'<Activity User:{self.user_id} Type:{self.activity_type}>'
+    
+    def to_dict(self):
+        """Convert activity to dictionary"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'title': self.title,
+            'description': self.description,
+            'activity_type': self.activity_type,
+            'earning': float(self.earning),
+            'company': self.company,
+            'created_at': self.created_at.isoformat(),
+            'timestamp': self.created_at.strftime('%d.%m.%Y %H:%M')
+        }
