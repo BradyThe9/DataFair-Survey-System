@@ -2,14 +2,20 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app import create_app
-from app.database import db
+# FIXED IMPORT - Verwende direkte Imports statt create_app
+from flask import Flask
+from app.database import db, init_db
 from app.models import DataType
+from config import Config
 from datetime import datetime
 
 def seed_data_types():
     """Seed the database with initial data types"""
-    app = create_app()
+    
+    # Create Flask app locally (Fix für create_app Import)
+    app = Flask(__name__)
+    app.config.from_object(Config)
+    init_db(app)
     
     with app.app_context():
         # Check if data types already exist

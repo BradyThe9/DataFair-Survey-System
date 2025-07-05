@@ -189,50 +189,84 @@ class SurveyResponse(db.Model):
         
         return data
 
+class DataType(db.Model):
+    """Data Type Model - Verfügbare Datentypen für Nutzer"""
+    __tablename__ = 'data_types'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    icon = db.Column(db.String(10))  # Emoji icons
+    monthly_value = db.Column(db.Numeric(10, 2), default=0.00)  # Monatlicher Wert in EUR
+    category = db.Column(db.String(50))
+    
+    # Status
+    is_active = db.Column(db.Boolean, default=True)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    permissions = db.relationship('DataPermission', backref='data_type', lazy='dynamic')
+    
+    def __repr__(self):
+        return f'<DataType {self.name}>'
+    
+    def to_dict(self):
+        """Convert data type to dictionary"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'monthly_value': float(self.monthly_value),
+            'category': self.category,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat()
+        }
+
 class DataPermission(db.Model):
     """Data Permission Model for user consent management"""
     __tablename__ = 'data_permissions'
     
     id = db.Column(db.Integer, primary_key=True)
     
-    # Foreign key
+    # Foreign keys - KORRIGIERT!
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    data_type_id = db.Column(db.Integer, db.ForeignKey('data_types.id'), nullable=False)  # <- GEÄNDERT VON STRING ZU FK
     
-    # Permission details
-    data_type = db.Column(db.String(100), nullable=False)  # e.g., 'browsing_history', 'location_data'
-    is_enabled = db.Column(db.Boolean, default=False)
-    
-    # Value and compensation
-    monthly_value = db.Column(db.Numeric(10, 2), default=0.00)
+    # Permission status
+    enabled = db.Column(db.Boolean, default=False)
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     granted_at = db.Column(db.DateTime)
-    revoked_at = db.Column(db.DateTime)
+    last_accessed = db.Column(db.DateTime)
     
     # Relationships
     user = db.relationship('User', backref='data_permissions')
+    # data_type relationship wird von DataType.permissions backref erstellt
     
     # Constraints
     __table_args__ = (
-        db.UniqueConstraint('user_id', 'data_type', name='unique_user_data_type'),
+        db.UniqueConstraint('user_id', 'data_type_id', name='unique_user_data_type'),
     )
     
     def __repr__(self):
-        return f'<DataPermission User:{self.user_id} Type:{self.data_type}>'
+        return f'<DataPermission User:{self.user_id} DataType:{self.data_type_id}>'
     
     def to_dict(self):
         """Convert data permission to dictionary"""
         return {
             'id': self.id,
             'user_id': self.user_id,
-            'data_type': self.data_type,
-            'is_enabled': self.is_enabled,
-            'monthly_value': float(self.monthly_value),
+            'data_type_id': self.data_type_id,
+            'enabled': self.enabled,
             'created_at': self.created_at.isoformat(),
             'granted_at': self.granted_at.isoformat() if self.granted_at else None,
-            'revoked_at': self.revoked_at.isoformat() if self.revoked_at else None
+            'last_accessed': self.last_accessed.isoformat() if self.last_accessed else None
         }
 
 class Earning(db.Model):
@@ -275,4 +309,44 @@ class Earning(db.Model):
             'status': self.status,
             'earned_at': self.earned_at.isoformat(),
             'paid_at': self.paid_at.isoformat() if self.paid_at else None
+        }
+
+class Payout(db.Model):
+    """Payout Model to track user payout requests"""
+    __tablename__ = 'payouts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Foreign keys
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Payout details
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    method = db.Column(db.String(50), nullable=False)  # 'paypal', 'bank', 'crypto'
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'processing', 'completed', 'failed'
+    
+    # External reference (e.g., PayPal transaction ID)
+    external_id = db.Column(db.String(100))
+    
+    # Timestamps
+    requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    
+    # Relationships
+    user = db.relationship('User', backref='payouts')
+    
+    def __repr__(self):
+        return f'<Payout User:{self.user_id} Amount:{self.amount} Status:{self.status}>'
+    
+    def to_dict(self):
+        """Convert payout to dictionary"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'amount': float(self.amount),
+            'method': self.method,
+            'status': self.status,
+            'external_id': self.external_id,
+            'requested_at': self.requested_at.isoformat(),
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
         }

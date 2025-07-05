@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 from app.database import db
-from app.models import User, Earning
+from app.models import User, Earning, DataType, DataPermission
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
 
@@ -25,81 +25,8 @@ def get_dashboard_overview():
         # ECHTE Earnings Data aus der Datenbank
         earnings_data = get_user_earnings_data(current_user.id)
         
-        # Mock Data Types (da wir noch keine DataType Tabelle haben)
-        data_types_list = [
-            {
-                'id': 1,
-                'name': 'Shopping-Verhalten',
-                'description': 'Online-Einkäufe, besuchte Shops, Produktinteressen',
-                'icon': '🛒',
-                'monthlyValue': 12.00,
-                'category': 'E-Commerce',
-                'enabled': False,
-                'grantedAt': None,
-                'lastAccessed': None,
-                'lastRequest': 'Nie'
-            },
-            {
-                'id': 2,
-                'name': 'Demografische Daten',
-                'description': 'Alter, Geschlecht, Wohnort, Familienstand',
-                'icon': '👤',
-                'monthlyValue': 8.50,
-                'category': 'Persönlich',
-                'enabled': False,
-                'grantedAt': None,
-                'lastAccessed': None,
-                'lastRequest': 'Nie'
-            },
-            {
-                'id': 3,
-                'name': 'Interessensbereiche',
-                'description': 'Hobbys, Sport, Reisen, Entertainment-Präferenzen',
-                'icon': '🎯',
-                'monthlyValue': 6.75,
-                'category': 'Lifestyle',
-                'enabled': False,
-                'grantedAt': None,
-                'lastAccessed': None,
-                'lastRequest': 'Nie'
-            },
-            {
-                'id': 4,
-                'name': 'Technologie-Nutzung',
-                'description': 'Geräte, Apps, Software-Präferenzen',
-                'icon': '📱',
-                'monthlyValue': 5.25,
-                'category': 'Technologie',
-                'enabled': False,
-                'grantedAt': None,
-                'lastAccessed': None,
-                'lastRequest': 'Nie'
-            },
-            {
-                'id': 5,
-                'name': 'Fitness & Gesundheit',
-                'description': 'Aktivitätsdaten, Gesundheitsinteressen (anonymisiert)',
-                'icon': '💪',
-                'monthlyValue': 9.00,
-                'category': 'Gesundheit',
-                'enabled': False,
-                'grantedAt': None,
-                'lastAccessed': None,
-                'lastRequest': 'Nie'
-            },
-            {
-                'id': 6,
-                'name': 'Finanzverhalten',
-                'description': 'Ausgabenkategorien, Spar- und Investitionsinteressen',
-                'icon': '💰',
-                'monthlyValue': 15.50,
-                'category': 'Finanzen',
-                'enabled': False,
-                'grantedAt': None,
-                'lastAccessed': None,
-                'lastRequest': 'Nie'
-            }
-        ]
+        # ECHTE DataTypes aus der Datenbank (ERSETZT HARDCODED!)
+        data_types_list = get_user_data_types_with_permissions(current_user.id)
         
         # Activities mit echten Earnings
         activities_list = get_user_activities(current_user.id)
@@ -107,7 +34,7 @@ def get_dashboard_overview():
         # Statistics
         stats = {
             'totalDataTypes': len(data_types_list),
-            'activeDataTypes': 0,
+            'activeDataTypes': len([dt for dt in data_types_list if dt['enabled']]),
             'totalActivities': len(activities_list),
             'memberSince': datetime.utcnow().strftime('%B %Y')
         }
@@ -199,6 +126,43 @@ def get_user_earnings_data(user_id):
             'monthlyData': [0, 0, 0, 0, 0, 0],
             'chartLabels': ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun']
         }
+
+def get_user_data_types_with_permissions(user_id):
+    """Get data types with user's permission status from DATABASE"""
+    try:
+        # Alle verfügbaren DataTypes aus DB laden
+        all_data_types = DataType.query.filter_by(is_active=True).all()
+        
+        # User's permissions aus DB laden
+        user_permissions = DataPermission.query.filter_by(user_id=user_id).all()
+        permission_dict = {perm.data_type_id: perm for perm in user_permissions}
+        
+        # Kombiniere DataTypes mit Permission Status
+        data_types_list = []
+        for data_type in all_data_types:
+            permission = permission_dict.get(data_type.id)
+            
+            data_type_info = {
+                'id': data_type.id,
+                'name': data_type.name,
+                'description': data_type.description,
+                'icon': data_type.icon,
+                'monthlyValue': float(data_type.monthly_value),
+                'category': data_type.category,
+                'enabled': permission.enabled if permission else False,
+                'grantedAt': permission.granted_at.isoformat() if permission and permission.granted_at else None,
+                'lastAccessed': permission.last_accessed.isoformat() if permission and permission.last_accessed else None,
+                'lastRequest': 'Nie' if not permission or not permission.last_accessed else permission.last_accessed.strftime('%d.%m.%Y')
+            }
+            
+            data_types_list.append(data_type_info)
+        
+        return data_types_list
+        
+    except Exception as e:
+        print(f"Error getting data types: {str(e)}")
+        # Fallback zu leerem Array bei Fehler
+        return []
 
 def get_user_activities(user_id):
     """Get user activities from earnings"""
@@ -301,19 +265,33 @@ def generate_test_earnings():
         return jsonify({'error': str(e)}), 500
 
 def toggle_data_type_quick(data_type_id, enabled):
-    """Quick toggle for data types from dashboard"""
+    """Quick toggle for data types from dashboard - JETZT MIT ECHTER DB"""
     try:
-        # Mock data type names
-        data_type_names = {
-            1: 'Shopping-Verhalten',
-            2: 'Demografische Daten', 
-            3: 'Interessensbereiche',
-            4: 'Technologie-Nutzung',
-            5: 'Fitness & Gesundheit',
-            6: 'Finanzverhalten'
-        }
+        # DataType aus DB laden
+        data_type = DataType.query.get(data_type_id)
+        if not data_type:
+            return jsonify({'error': 'DataType nicht gefunden'}), 404
         
-        data_type_name = data_type_names.get(data_type_id, 'Unbekannter Datentyp')
+        # Prüfe ob User bereits eine Permission für diesen DataType hat
+        permission = DataPermission.query.filter_by(
+            user_id=current_user.id,
+            data_type_id=data_type_id
+        ).first()
+        
+        if not permission:
+            # Erstelle neue Permission
+            permission = DataPermission(
+                user_id=current_user.id,
+                data_type_id=data_type_id,
+                enabled=enabled,
+                granted_at=datetime.utcnow() if enabled else None
+            )
+            db.session.add(permission)
+        else:
+            # Update bestehende Permission
+            permission.enabled = enabled
+            permission.granted_at = datetime.utcnow() if enabled else permission.granted_at
+            permission.updated_at = datetime.utcnow()
         
         # If enabling a data type, generate a small earning as reward
         if enabled:
@@ -322,23 +300,24 @@ def toggle_data_type_quick(data_type_id, enabled):
                 user_id=current_user.id,
                 amount=bonus_amount,
                 source_type='data_activation',
-                description=f'Aktivierungsbonus für {data_type_name}',
+                description=f'Aktivierungsbonus für {data_type.name}',
                 status='earned'
             )
             db.session.add(earning)
-            db.session.commit()
             
-            message = f"'{data_type_name}' aktiviert! Du erhältst €{bonus_amount:.2f} Aktivierungsbonus."
+            message = f"'{data_type.name}' aktiviert! Du erhältst €{bonus_amount:.2f} Aktivierungsbonus."
         else:
-            message = f"'{data_type_name}' deaktiviert"
+            message = f"'{data_type.name}' deaktiviert"
+        
+        db.session.commit()
         
         return jsonify({
             'success': True,
             'message': message,
             'dataType': {
-                'id': data_type_id,
+                'id': data_type.id,
                 'enabled': enabled,
-                'monthlyValue': 12.00
+                'monthlyValue': float(data_type.monthly_value)
             }
         })
         

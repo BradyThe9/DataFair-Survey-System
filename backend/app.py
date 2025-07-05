@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 DataFair - Main Application
-Mit korrigierten Frontend-Routes
+Mit korrigierten Frontend-Routes und DataType Seeding
 """
 
 import os
@@ -168,7 +168,7 @@ def create_app():
                 'surveys': True,
                 'dashboard': True,
                 'earnings': 'partial',
-                'data_permissions': 'pending'
+                'data_permissions': 'active'  # JETZT AKTIV!
             }
         })
     
@@ -235,6 +235,19 @@ def create_demo_data():
         print("✅ Demo user created: demo@datafair.com / demo123")
     else:
         print("✅ Demo user already exists!")
+    
+    # Check for DataTypes - NEU!
+    from app.models import DataType
+    datatype_count = DataType.query.count()
+    if datatype_count == 0:
+        try:
+            from seed_data import seed_data_types
+            seed_data_types()
+            print("✅ DataTypes seeded!")
+        except ImportError as e:
+            print(f"⚠️ DataType seeding failed: {e}")
+    else:
+        print(f"✅ {datatype_count} DataTypes already exist")
     
     # Check for surveys
     survey_count = Survey.query.count()
